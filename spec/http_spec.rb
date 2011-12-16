@@ -1,21 +1,42 @@
 require File.dirname(__FILE__) + '/spec_helper'
+require "openssl"
+
 
 describe R509::CertificateAuthority::Http do
+=begin
+before :all do
+class R509::CertificateAuthority::Http
+    configure do
+        CRL = double("crl")
+    end
+end
+end
+=end
+
+    before :each do
+        @crl = double("crl")
+    end
+
     def app
         @app ||= R509::CertificateAuthority::Http
+        @app.send(:set, :crl, @crl)
     end
 
     context "get CRL" do
         it "gets the CRL" do
+            @crl.should_receive(:to_pem).and_return("generated crl")
             get "/1/crl/get"
             last_response.should be_ok
+            last_response.body.should == "generated crl"
         end
     end
 
     context "generate CRL" do
         it "generates the CRL" do
+            @crl.should_receive(:generate_crl).and_return("generated crl")
             get "/1/crl/generate"
             last_response.should be_ok
+            last_response.body.should == "generated crl"
         end
     end
 
@@ -24,7 +45,53 @@ describe R509::CertificateAuthority::Http do
     end
 
     context "revoke certificate" do
-        it "when no serial is given"
+        it "when no serial is given" do
+            post "/1/certificate/revoke"
+            last_response.should_not be_ok
+            last_response.body.should == "Serial must be provided"
+        end
+        it "when serial is given but not reason" do
+            @crl.should_receive(:revoke_cert).with(12345, 0).and_return(nil)
+            @crl.should_receive(:to_pem).and_return("generated crl")
+            post "/1/certificate/revoke", "serial" => "12345"
+            last_response.should be_ok
+            last_response.body.should == "generated crl"
+        end
+        it "when serial and reason are given" do
+            @crl.should_receive(:revoke_cert).with(12345, 1).and_return(nil)
+            @crl.should_receive(:to_pem).and_return("generated crl")
+            post "/1/certificate/revoke", "serial" => "12345", "reason" => "1"
+            last_response.should be_ok
+            last_response.body.should == "generated crl"
+        end
+        it "when serial is not an integer" do
+            @crl.should_receive(:revoke_cert).with(0, 0).and_raise(R509::R509Error.new("some r509 error"))
+            post "/1/certificate/revoke", "serial" => "foo"
+            last_response.should_not be_ok
+            last_response.body.should == "some r509 error"
+        end
+        it "when reason is not an integer" do
+            @crl.should_receive(:revoke_cert).with(12345, 0).and_return(nil)
+            @crl.should_receive(:to_pem).and_return("generated crl")
+            post "/1/certificate/revoke", "serial" => "12345", "reason" => "foo"
+            last_response.should be_ok
+            last_response.body.should == "generated crl"
+        end
+    end
+
+    context "unrevoke certificate" do
+        it "when no serial is given" do
+            post "/1/certificate/unrevoke"
+            last_response.should_not be_ok
+            last_response.body.should == "Serial must be provided"
+        end
+        it "when serial is given" do
+            @crl.should_receive(:unrevoke_cert).with(12345).and_return(nil)
+            @crl.should_receive(:to_pem).and_return("generated crl")
+            post "/1/certificate/unrevoke", "serial" => "12345"
+            last_response.should be_ok
+            last_response.body.should == "generated crl"
+        end
     end
 
 end

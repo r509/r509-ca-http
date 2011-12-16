@@ -26,43 +26,87 @@ module R509
                             :key => File.read(yaml_config["ca"]["key_filename"])
                         )
                 )
+
+                set :crl, R509::Crl.new(config)
+            end
+
+            helpers do
+                def crl
+                    settings.crl
+                end
+                def log
+                    settings.log
+                end
             end
 
             configure :production do
-                LOG = Logger.new(STDOUT)
+                set :log, Logger.new(STDOUT)
             end
 
             configure :development do
-                LOG = Logger.new(STDOUT)
+                set :log, Logger.new(STDOUT)
             end
 
             configure :test do
-                LOG = Logger.new(nil)
+                set :log, Logger.new(nil)
             end
 
             error do
-                "Something is amiss with our OCSP responder. You should ... wait?"
+                "Something is amiss with our CA. You should ... wait?"
+            end
+
+            error StandardError do
+                env["sinatra.error"].message
             end
 
             get '/favicon.ico' do
-                LOG.debug "go away. no children."
+                log.debug "go away. no children."
                 "go away. no children"
             end
 
             get '/1/crl/get/?' do
-                LOG.info "Get CRL"
+                log.info "Get CRL"
+                crl.to_pem
             end
 
             get '/1/crl/generate/?' do
-                LOG.info "Generate CRL"
+                log.info "Generate CRL"
+                crl.generate_crl
             end
 
             post '/1/certificate/issue/?' do
-                Log.info "Issue Certificate"
+                log.info "Issue Certificate"
+                "Not implemented"
             end
 
             post '/1/certificate/revoke/?' do
-                Log.info "Revoke Certificate"
+                log.info "Revoke Certificate"
+                serial = params[:serial]
+                reason = params[:reason]
+
+                if not serial
+                    raise ArgumentError, "Serial must be provided"
+                end
+                if not reason
+                    reason = 0
+                end
+
+                crl.revoke_cert(serial.to_i, reason.to_i)
+
+                crl.to_pem
+            end
+
+            post '/1/certificate/unrevoke/?' do
+                log.info "Unrevoke Certificate"
+                serial = params[:serial]
+
+                if not serial
+                    raise ArgumentError, "Serial must be provided"
+                end
+
+                crl.unrevoke_cert(serial.to_i)
+
+                crl.to_pem
             end
         end
     end
