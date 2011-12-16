@@ -30,11 +30,15 @@ module R509
                     )
 
                     set :crl, R509::Crl.new(config)
+                    set :ca, R509::CertificateAuthority::Signer.new(config)
                 end
 
                 helpers do
                     def crl
                         settings.crl
+                    end
+                    def ca
+                        settings.ca
                     end
                     def log
                         settings.log
@@ -79,15 +83,8 @@ module R509
                 post '/1/certificate/issue/?' do
                     log.info "Issue Certificate"
                     raw = request.env["rack.input"].read
-                    puts raw
 
                     puts params.inspect
-
-                    parsed = Rack::Utils::parse_nested_query(raw)
-                    puts parsed.inspect
-
-                    amped = Rack::Utils::unescape("rack%26ah")
-                    puts amped
 
                     subject_parser = R509::CertificateAuthority::Http::SubjectParser.new
                     subject = subject_parser.parse(raw, "sub")

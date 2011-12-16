@@ -5,11 +5,13 @@ require "openssl"
 describe R509::CertificateAuthority::Http::Server do
     before :each do
         @crl = double("crl")
+        @ca = double("ca")
     end
 
     def app
         @app ||= R509::CertificateAuthority::Http::Server
         @app.send(:set, :crl, @crl)
+        @app.send(:set, :ca, @ca)
     end
 
     context "get CRL" do
