@@ -3,16 +3,6 @@ require "openssl"
 
 
 describe R509::CertificateAuthority::Http do
-=begin
-before :all do
-class R509::CertificateAuthority::Http
-    configure do
-        CRL = double("crl")
-    end
-end
-end
-=end
-
     before :each do
         @crl = double("crl")
     end
