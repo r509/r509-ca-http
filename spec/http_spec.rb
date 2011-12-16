@@ -2,13 +2,13 @@ require File.dirname(__FILE__) + '/spec_helper'
 require "openssl"
 
 
-describe R509::CertificateAuthority::Http do
+describe R509::CertificateAuthority::Http::Server do
     before :each do
         @crl = double("crl")
     end
 
     def app
-        @app ||= R509::CertificateAuthority::Http
+        @app ||= R509::CertificateAuthority::Http::Server
         @app.send(:set, :crl, @crl)
     end
 
@@ -32,6 +32,9 @@ describe R509::CertificateAuthority::Http do
 
     context "issue certificate" do
         it "when no parameters are given"
+        it "when a subject line should be in order" do
+            post "/1/certificate/issue", "sub[]" => [{"key" => "cn", "value" => "common name"}, {"key" => "o", "value" => "org"}, {"key" => "l", "value" => "locality"}]
+        end
     end
 
     context "revoke certificate" do

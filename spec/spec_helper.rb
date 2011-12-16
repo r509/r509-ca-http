@@ -9,7 +9,7 @@ require 'rubygems'
 #require 'fixtures'
 require 'rspec'
 require 'rack/test'
-require 'r509/CertificateAuthority/Http'
+require 'r509/CertificateAuthority/Http/Server'
 
 RSpec.configure do |conf|
   conf.include Rack::Test::Methods
