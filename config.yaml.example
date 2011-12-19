@@ -1,4 +1,16 @@
 ca: {
-    cer_filename: "/some/path/to/ca.cer",
-    key_filename: "/some/path/to/ca_key.pem"
+    ca_cert: {
+        cert: "/some/path/to/ca.cer",
+        key: "/some/path/to/ca_key.pem"
+    },
+    cdp_location: 'URI:http://crl.domain.com/test_ca.crl',
+    message_digest: 'SHA1', #SHA1, SHA256, SHA512 supported. MD5 too, but you really shouldn't use that unless you have a good reason
+    server: {
+        basic_constraints: "CA:FALSE",
+        key_usage: [digitalSignature,keyEncipherment],
+        extended_key_usage: [serverAuth],
+        certificate_policies: [ "policyIdentifier=2.16.840.1.9999999999.1.2.3.4.1", "CPS.1=http://example.com/cps"]
+    }
+}
+ca: {
 }
