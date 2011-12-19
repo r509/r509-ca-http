@@ -20,9 +20,6 @@ module R509
                     #set :environment, :production
 
                     yaml_config = YAML::load(File.read("config.yaml"))
-                    puts yaml_config.inspect
-
-                    #redis = Redis.new
 
                     config = R509::Config::CaConfig.from_yaml("ca", File.read("config.yaml"))
 
@@ -79,7 +76,7 @@ module R509
                 end
 
                 error StandardError do
-                    puts env["sinatra.error"].inspect
+                    log.error env["sinatra.error"].inspect
                     env["sinatra.error"].message
                 end
 
@@ -101,7 +98,9 @@ module R509
                 post '/1/certificate/issue/?' do
                     log.info "Issue Certificate"
                     raw = request.env["rack.input"].read
-                    puts raw
+                    log.info raw
+
+                    log.info params.inspect
 
                     if not params.has_key?("profile")
                         raise ArgumentError, "Must provide a CA profile"
@@ -114,14 +113,14 @@ module R509
                     end
 
                     subject = subject_parser.parse(raw, "subject")
-                    puts subject.inspect
-                    puts subject.to_s
+                    log.info subject.inspect
+                    log.info subject.to_s
                     if subject.empty?
                         raise ArgumentError, "Must provide a subject"
                     end
 
                     if params.has_key?("extensions") and params["extensions"].has_key?("subjectAlternativeName")
-                        san_names = params["extensions"]["subjectAlternativeName"]
+                        san_names = params["extensions"]["subjectAlternativeName"].select { |name| not name.empty? }
                     else
                         san_names = []
                     end
@@ -156,10 +155,8 @@ module R509
                     end
 
                     pem = cert.to_pem
-                    puts pem
-                    puts pem.size
+                    log.info pem
 
-                    #Base64::encode64(pem)
                     pem
                 end
 
@@ -191,6 +188,11 @@ module R509
                     crl.unrevoke_cert(serial.to_i)
 
                     crl.to_pem
+                end
+
+                get '/test/certificate/issue/?' do
+                    content_type :html
+                    erb :test_issue
                 end
             end
         end

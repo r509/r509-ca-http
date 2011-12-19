@@ -1,0 +1,75 @@
+<html>
+<head>
+    <title>Issue</title>
+</head>
+<body>
+
+<h1>Issue a certificate</h1>
+
+<form method="post" action="/1/certificate/issue/">
+    <p>
+        Profile:
+        <br />
+        <input type="text" name="profile" tabindex="1" />
+    </p>
+    <p>
+        Validity Period:
+        <br />
+        <input type="text" name="validityPeriod" />
+    </p>
+    <p>
+        C:
+        <br />
+        <input type="text" name="subject[C]" />
+    </p>
+    <p>
+        ST:
+        <br />
+        <input type="text" name="subject[ST]" />
+    </p>
+    <p>
+        L:
+        <br />
+        <input type="text" name="subject[L]" />
+    </p>
+    <p>
+        O:
+        <br />
+        <input type="text" name="subject[O]" />
+    </p>
+    <p>
+        OU:
+        <br />
+        <input type="text" name="subject[OU]" />
+    </p>
+    <p>
+        CN:
+        <br />
+        <input type="text" name="subject[CN]" />
+    </p>
+    <p>
+        SAN:
+        <br />
+        <input type="text" name="extensions[subjectAlternativeName][]" />
+        <br />
+        <input type="text" name="extensions[subjectAlternativeName][]" />
+        <br />
+        <input type="text" name="extensions[subjectAlternativeName][]" />
+        <br />
+        <input type="text" name="extensions[subjectAlternativeName][]" />
+        <br />
+        <input type="text" name="extensions[subjectAlternativeName][]" />
+        <br />
+    </p>
+    <p>
+        CSR:
+        <br />
+        <textarea name="csr" rows="6" cols="80"></textarea>
+    </p>
+    <p>
+        <input type="submit" value="Gimme" />
+    </p>
+</form>
+
+</body>
+</html>

@@ -136,6 +136,20 @@ describe R509::CertificateAuthority::Http::Server do
             last_response.should be_ok
             last_response.body.should == "signed cert"
         end
+        it "when there are empty SAN names" do
+            csr = double("csr")
+            @csr_factory.should_receive(:build).with(:csr => "csr").and_return(csr)
+            @validity_period_converter.should_receive(:convert).with("365").and_return({:not_before => 1, :not_after => 2})
+            subject = R509::Subject.new [["CN", "domain.com"]]
+            @subject_parser.should_receive(:parse).with(anything, "subject").and_return(subject)
+            cert = double("cert")
+            @ca.should_receive(:sign_cert).with(:csr => csr, :profile_name => "profile", :data_hash => {:subject => subject, :san_names => ["domain1.com", "domain2.com"]}, :not_before => 1, :not_after => 2).and_return(cert)
+            cert.should_receive(:to_pem).and_return("signed cert")
+
+            post "/1/certificate/issue", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr", "extensions[subjectAlternativeName][]" => ["domain1.com","domain2.com","",""]
+            last_response.should be_ok
+            last_response.body.should == "signed cert"
+        end
     end
 
     context "revoke certificate" do
