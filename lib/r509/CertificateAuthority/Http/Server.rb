@@ -1,12 +1,10 @@
 require 'rubygems' if RUBY_VERSION < "1.9"
 require 'sinatra/base'
 require 'r509'
-require 'r509/Validity/Redis'
 require "#{File.dirname(__FILE__)}/SubjectParser"
 require "#{File.dirname(__FILE__)}/ValidityPeriodConverter"
 require "#{File.dirname(__FILE__)}/Factory"
 require 'base64'
-require 'redis'
 require 'yaml'
 require 'logger'
 
