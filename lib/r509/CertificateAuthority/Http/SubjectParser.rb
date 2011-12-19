@@ -11,7 +11,7 @@ module R509
                     raw.split(/[&;] */n).each { |pair|
                         key, value = pair.split('=', 2).map { |data| unescape(data) }
                         match = key.match(/#{name}\[(.*)\]/)
-                        if not match.nil?
+                        if not match.nil? and not value.empty?
                             subject[match[1]] = value
                         end
                     }

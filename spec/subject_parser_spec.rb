@@ -40,4 +40,12 @@ describe R509::CertificateAuthority::Http::SubjectParser do
         subject["L"].should == "locality"
         subject.to_s.should == "/CN=domain.com/1.3.6.1.4.1.311.60.2.1.3=org/L=locality"
     end
+    it "when one of the subject components is an empty string" do
+        subject = @parser.parse("validityPeriod=1095&subject[CN]=domain.com&subject[O]=&subject[L]=locality&data=blahblah")
+        subject.empty?.should == false
+        subject["CN"].should == "domain.com"
+        subject["O"].should == nil
+        subject["L"].should == "locality"
+        subject.to_s.should == "/CN=domain.com/L=locality"
+    end
 end
