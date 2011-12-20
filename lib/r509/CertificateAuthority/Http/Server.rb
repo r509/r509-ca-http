@@ -90,14 +90,24 @@ module R509
                     "go away. no children"
                 end
 
-                get '/1/crl/get/?' do
+                get '/1/crl/:ca/get/?' do
                     log.info "Get CRL"
-                    crl("test_ca").to_pem
+
+                    if not crl(params[:ca])
+                        raise ArgumentError, "CA not found"
+                    end
+
+                    crl(params[:ca]).to_pem
                 end
 
-                get '/1/crl/generate/?' do
+                get '/1/crl/:ca/generate/?' do
                     log.info "Generate CRL"
-                    crl("test_ca").generate_crl
+
+                    if not crl(params[:ca])
+                        raise ArgumentError, "CA not found"
+                    end
+
+                    crl(params[:ca]).generate_crl
                 end
 
                 post '/1/certificate/issue/?' do
@@ -173,9 +183,16 @@ module R509
 
                 post '/1/certificate/revoke/?' do
                     log.info "Revoke Certificate"
+                    ca = params[:ca]
                     serial = params[:serial]
                     reason = params[:reason]
 
+                    if not ca
+                        raise ArgumentError, "CA must be provided"
+                    end
+                    if not crl(ca)
+                        raise ArgumentError, "CA not found"
+                    end
                     if not serial
                         raise ArgumentError, "Serial must be provided"
                     end
@@ -183,22 +200,29 @@ module R509
                         reason = 0
                     end
 
-                    crl("test_ca").revoke_cert(serial.to_i, reason.to_i)
+                    crl(ca).revoke_cert(serial.to_i, reason.to_i)
 
-                    crl("test_ca").to_pem
+                    crl(ca).to_pem
                 end
 
                 post '/1/certificate/unrevoke/?' do
                     log.info "Unrevoke Certificate"
+                    ca = params[:ca]
                     serial = params[:serial]
 
+                    if not ca
+                        raise ArgumentError, "CA must be provided"
+                    end
+                    if not crl(ca)
+                        raise ArgumentError, "CA not found"
+                    end
                     if not serial
                         raise ArgumentError, "Serial must be provided"
                     end
 
-                    crl("test_ca").unrevoke_cert(serial.to_i)
+                    crl(ca).unrevoke_cert(serial.to_i)
 
-                    crl("test_ca").to_pem
+                    crl(ca).to_pem
                 end
 
                 get '/test/certificate/issue/?' do

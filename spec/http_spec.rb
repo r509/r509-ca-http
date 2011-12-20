@@ -25,19 +25,29 @@ describe R509::CertificateAuthority::Http::Server do
     context "get CRL" do
         it "gets the CRL" do
             @crls["test_ca"].should_receive(:to_pem).and_return("generated crl")
-            get "/1/crl/get"
+            get "/1/crl/test_ca/get"
             last_response.should be_ok
             last_response.content_type.should match /text\/plain/
             last_response.body.should == "generated crl"
+        end
+        it "when CA is not found" do
+            get "/1/crl/bogus/get/"
+            last_response.status.should == 500
+            last_response.body.should == "CA not found"
         end
     end
 
     context "generate CRL" do
         it "generates the CRL" do
             @crls["test_ca"].should_receive(:generate_crl).and_return("generated crl")
-            get "/1/crl/generate"
+            get "/1/crl/test_ca/generate"
             last_response.should be_ok
             last_response.body.should == "generated crl"
+        end
+        it "when CA is not found" do
+            get "/1/crl/bogus/generate/"
+            last_response.status.should == 500
+            last_response.body.should == "CA not found"
         end
     end
 
@@ -163,50 +173,70 @@ describe R509::CertificateAuthority::Http::Server do
     end
 
     context "revoke certificate" do
+        it "when no CA is given" do
+            post "/1/certificate/revoke", "serial" => "foo"
+            last_response.status.should == 500
+            last_response.body.should == "CA must be provided"
+        end
+        it "when CA is not found" do
+            post "/1/certificate/revoke", "ca" => "bogus ca name", "serial" => "foo"
+            last_response.status.should == 500
+            last_response.body.should == "CA not found"
+        end
         it "when no serial is given" do
-            post "/1/certificate/revoke"
+            post "/1/certificate/revoke", "ca" => "test_ca"
             last_response.should_not be_ok
             last_response.body.should == "Serial must be provided"
         end
         it "when serial is given but not reason" do
             @crls["test_ca"].should_receive(:revoke_cert).with(12345, 0).and_return(nil)
             @crls["test_ca"].should_receive(:to_pem).and_return("generated crl")
-            post "/1/certificate/revoke", "serial" => "12345"
+            post "/1/certificate/revoke", "ca" => "test_ca", "serial" => "12345"
             last_response.should be_ok
             last_response.body.should == "generated crl"
         end
         it "when serial and reason are given" do
             @crls["test_ca"].should_receive(:revoke_cert).with(12345, 1).and_return(nil)
             @crls["test_ca"].should_receive(:to_pem).and_return("generated crl")
-            post "/1/certificate/revoke", "serial" => "12345", "reason" => "1"
+            post "/1/certificate/revoke", "ca" => "test_ca", "serial" => "12345", "reason" => "1"
             last_response.should be_ok
             last_response.body.should == "generated crl"
         end
         it "when serial is not an integer" do
             @crls["test_ca"].should_receive(:revoke_cert).with(0, 0).and_raise(R509::R509Error.new("some r509 error"))
-            post "/1/certificate/revoke", "serial" => "foo"
+            post "/1/certificate/revoke", "ca" => "test_ca", "serial" => "foo"
             last_response.should_not be_ok
             last_response.body.should == "some r509 error"
         end
         it "when reason is not an integer" do
             @crls["test_ca"].should_receive(:revoke_cert).with(12345, 0).and_return(nil)
             @crls["test_ca"].should_receive(:to_pem).and_return("generated crl")
-            post "/1/certificate/revoke", "serial" => "12345", "reason" => "foo"
+            post "/1/certificate/revoke", "ca" => "test_ca", "serial" => "12345", "reason" => "foo"
             last_response.should be_ok
             last_response.body.should == "generated crl"
         end
     end
 
     context "unrevoke certificate" do
+        it "when no CA is given" do
+            post "/1/certificate/unrevoke", "serial" => "foo"
+            last_response.status.should == 500
+            last_response.body.should == "CA must be provided"
+        end
+        it "when CA is not found" do
+            post "/1/certificate/unrevoke", "ca" => "bogus ca", "serial" => "foo"
+            last_response.status.should == 500
+            last_response.body.should == "CA not found"
+        end
         it "when no serial is given" do
-            post "/1/certificate/unrevoke"
+            post "/1/certificate/unrevoke", "ca" => "test_ca"
             last_response.should_not be_ok
             last_response.body.should == "Serial must be provided"
         end
         it "when serial is given" do
             @crls["test_ca"].should_receive(:unrevoke_cert).with(12345).and_return(nil)
             @crls["test_ca"].should_receive(:to_pem).and_return("generated crl")
-            post "/1/certificate/unrevoke", "serial" => "12345"
+            post "/1/certificate/unrevoke", "ca" => "test_ca", "serial" => "12345"
             last_response.should be_ok
             last_response.body.should == "generated crl"
         end
