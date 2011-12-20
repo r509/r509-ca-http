@@ -4,8 +4,8 @@ require "openssl"
 
 describe R509::CertificateAuthority::Http::Server do
     before :each do
-        @crl = double("crl")
-        @ca = double("ca")
+        @crls = { "test_ca" => double("crl") }
+        @certificate_authorities = { "test_ca" => double("test_ca") }
         @subject_parser = double("subject parser")
         @validity_period_converter = double("validity period converter")
         @csr_factory = double("csr factory")
@@ -14,8 +14,8 @@ describe R509::CertificateAuthority::Http::Server do
 
     def app
         @app ||= R509::CertificateAuthority::Http::Server
-        @app.send(:set, :crl, @crl)
-        @app.send(:set, :ca, @ca)
+        @app.send(:set, :crls, @crls)
+        @app.send(:set, :certificate_authorities, @certificate_authorities)
         @app.send(:set, :subject_parser, @subject_parser)
         @app.send(:set, :validity_period_converter, @validity_period_converter)
         @app.send(:set, :csr_factory, @csr_factory)
@@ -24,7 +24,7 @@ describe R509::CertificateAuthority::Http::Server do
 
     context "get CRL" do
         it "gets the CRL" do
-            @crl.should_receive(:to_pem).and_return("generated crl")
+            @crls["test_ca"].should_receive(:to_pem).and_return("generated crl")
             get "/1/crl/get"
             last_response.should be_ok
             last_response.content_type.should match /text\/plain/
@@ -34,7 +34,7 @@ describe R509::CertificateAuthority::Http::Server do
 
     context "generate CRL" do
         it "generates the CRL" do
-            @crl.should_receive(:generate_crl).and_return("generated crl")
+            @crls["test_ca"].should_receive(:generate_crl).and_return("generated crl")
             get "/1/crl/generate"
             last_response.should be_ok
             last_response.body.should == "generated crl"
@@ -45,28 +45,38 @@ describe R509::CertificateAuthority::Http::Server do
         it "when no parameters are given" do
             post "/1/certificate/issue"
             last_response.should_not be_ok
-            last_response.body.should == "Must provide a CA profile"
+            last_response.body.should == "Must provide a CA"
         end
-        it "when there's a profile, subject, CSR, but no validity period" do
-            post "/1/certificate/issue", "profile" => "my profile", "subject" => "subject", "csr" => "my csr"
+        it "when there's a profile, subject, CSR, validity period, but no ca" do
+            post "/1/certificate/issue", "profile" => "my profile", "subject" => "subject", "csr" => "my csr", "validityPeriod" => 365
+            last_response.should_not be_ok
+            last_response.body.should == "Must provide a CA"
+        end
+        it "when there's a ca, profile, subject, CSR, but no validity period" do
+            post "/1/certificate/issue", "ca" => "test_ca", "profile" => "my profile", "subject" => "subject", "csr" => "my csr"
             last_response.should_not be_ok
             last_response.body.should == "Must provide a validity period"
         end
-        it "when there's a profile, subject, validity period, but no CSR" do
-            post "/1/certificate/issue", "profile" => "my profile", "subject" => "subject", "validityPeriod" => 365
+        it "when there's a ca, profile, subject, validity period, but no CSR" do
+            post "/1/certificate/issue", "ca" => "test_ca", "profile" => "my profile", "subject" => "subject", "validityPeriod" => 365
             last_response.should_not be_ok
             last_response.body.should == "Must provide a CSR or SPKI"
         end
-        it "when there's a profile, CSR, validity period, but no subject" do
+        it "when there's a ca, profile, CSR, validity period, but no subject" do
             @subject_parser.should_receive(:parse).with(anything, "subject").and_return(R509::Subject.new)
-            post "/1/certificate/issue", "profile" => "profile", "validityPeriod" => 365, "csr" => "csr"
+            post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "validityPeriod" => 365, "csr" => "csr"
             last_response.should_not be_ok
             last_response.body.should == "Must provide a subject"
         end
-        it "when there's a subject, CSR, validity period, but no profile" do
-            post "/1/certificate/issue", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr"
+        it "when there's a ca, subject, CSR, validity period, but no profile" do
+            post "/1/certificate/issue", "ca" => "test_ca", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr"
             last_response.should_not be_ok
             last_response.body.should == "Must provide a CA profile"
+        end
+        it "when the given CA is not found" do
+            post "/1/certificate/issue", "ca" => "some bogus CA"
+            last_response.should_not be_ok
+            last_response.body.should == "CA not found"
         end
         it "fails to issue" do
             csr = double("csr")
@@ -74,9 +84,9 @@ describe R509::CertificateAuthority::Http::Server do
             @validity_period_converter.should_receive(:convert).with("365").and_return({:not_before => 1, :not_after => 2})
             subject = R509::Subject.new [["CN", "domain.com"]]
             @subject_parser.should_receive(:parse).with(anything, "subject").and_return(subject)
-            @ca.should_receive(:sign_cert).with(:csr => csr, :profile_name => "profile", :data_hash => {:subject => subject, :san_names => []}, :not_before => 1, :not_after => 2).and_raise(R509::R509Error.new("failed to issue because of: good reason"))
+            @certificate_authorities["test_ca"].should_receive(:sign_cert).with(:csr => csr, :profile_name => "profile", :data_hash => {:subject => subject, :san_names => []}, :not_before => 1, :not_after => 2).and_raise(R509::R509Error.new("failed to issue because of: good reason"))
 
-            post "/1/certificate/issue", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr"
+            post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr"
             last_response.should_not be_ok
             last_response.body.should == "failed to issue because of: good reason"
         end
@@ -87,10 +97,10 @@ describe R509::CertificateAuthority::Http::Server do
             subject = R509::Subject.new [["CN", "domain.com"]]
             @subject_parser.should_receive(:parse).with(anything, "subject").and_return(subject)
             cert = double("cert")
-            @ca.should_receive(:sign_cert).with(:csr => csr, :profile_name => "profile", :data_hash => {:subject => subject, :san_names => []}, :not_before => 1, :not_after => 2).and_return(cert)
+            @certificate_authorities["test_ca"].should_receive(:sign_cert).with(:csr => csr, :profile_name => "profile", :data_hash => {:subject => subject, :san_names => []}, :not_before => 1, :not_after => 2).and_return(cert)
             cert.should_receive(:to_pem).and_return("signed cert")
 
-            post "/1/certificate/issue", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr"
+            post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr"
             last_response.should be_ok
             last_response.body.should == "signed cert"
         end
@@ -101,10 +111,10 @@ describe R509::CertificateAuthority::Http::Server do
             subject = R509::Subject.new [["CN", "domain.com"]]
             @subject_parser.should_receive(:parse).with(anything, "subject").and_return(subject)
             cert = double("cert")
-            @ca.should_receive(:sign_cert).with(:csr => csr, :profile_name => "profile", :data_hash => {:subject => subject, :san_names => ["domain1.com", "domain2.com"]}, :not_before => 1, :not_after => 2).and_return(cert)
+            @certificate_authorities["test_ca"].should_receive(:sign_cert).with(:csr => csr, :profile_name => "profile", :data_hash => {:subject => subject, :san_names => ["domain1.com", "domain2.com"]}, :not_before => 1, :not_after => 2).and_return(cert)
             cert.should_receive(:to_pem).and_return("signed cert")
 
-            post "/1/certificate/issue", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr", "extensions[subjectAlternativeName][]" => ["domain1.com","domain2.com"]
+            post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr", "extensions[subjectAlternativeName][]" => ["domain1.com","domain2.com"]
             last_response.should be_ok
             last_response.body.should == "signed cert"
         end
@@ -115,10 +125,10 @@ describe R509::CertificateAuthority::Http::Server do
             spki = double("spki")
             @spki_factory.should_receive(:build).with(:spki => "spki", :subject => subject).and_return(spki)
             cert = double("cert")
-            @ca.should_receive(:sign_cert).with(:spki => spki, :profile_name => "profile", :data_hash => {:subject => subject, :san_names => []}, :not_before => 1, :not_after => 2).and_return(cert)
+            @certificate_authorities["test_ca"].should_receive(:sign_cert).with(:spki => spki, :profile_name => "profile", :data_hash => {:subject => subject, :san_names => []}, :not_before => 1, :not_after => 2).and_return(cert)
             cert.should_receive(:to_pem).and_return("signed cert")
 
-            post "/1/certificate/issue", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "spki" => "spki"
+            post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "spki" => "spki"
             last_response.should be_ok
             last_response.body.should == "signed cert"
         end
@@ -129,10 +139,10 @@ describe R509::CertificateAuthority::Http::Server do
             spki = double("spki")
             @spki_factory.should_receive(:build).with(:spki => "spki", :subject => subject).and_return(spki)
             cert = double("cert")
-            @ca.should_receive(:sign_cert).with(:spki => spki, :profile_name => "profile", :data_hash => {:subject => subject, :san_names => ["domain1.com", "domain2.com"]}, :not_before => 1, :not_after => 2).and_return(cert)
+            @certificate_authorities["test_ca"].should_receive(:sign_cert).with(:spki => spki, :profile_name => "profile", :data_hash => {:subject => subject, :san_names => ["domain1.com", "domain2.com"]}, :not_before => 1, :not_after => 2).and_return(cert)
             cert.should_receive(:to_pem).and_return("signed cert")
 
-            post "/1/certificate/issue", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "spki" => "spki", "extensions[subjectAlternativeName][]" => ["domain1.com","domain2.com"]
+            post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "spki" => "spki", "extensions[subjectAlternativeName][]" => ["domain1.com","domain2.com"]
             last_response.should be_ok
             last_response.body.should == "signed cert"
         end
@@ -143,10 +153,10 @@ describe R509::CertificateAuthority::Http::Server do
             subject = R509::Subject.new [["CN", "domain.com"]]
             @subject_parser.should_receive(:parse).with(anything, "subject").and_return(subject)
             cert = double("cert")
-            @ca.should_receive(:sign_cert).with(:csr => csr, :profile_name => "profile", :data_hash => {:subject => subject, :san_names => ["domain1.com", "domain2.com"]}, :not_before => 1, :not_after => 2).and_return(cert)
+            @certificate_authorities["test_ca"].should_receive(:sign_cert).with(:csr => csr, :profile_name => "profile", :data_hash => {:subject => subject, :san_names => ["domain1.com", "domain2.com"]}, :not_before => 1, :not_after => 2).and_return(cert)
             cert.should_receive(:to_pem).and_return("signed cert")
 
-            post "/1/certificate/issue", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr", "extensions[subjectAlternativeName][]" => ["domain1.com","domain2.com","",""]
+            post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr", "extensions[subjectAlternativeName][]" => ["domain1.com","domain2.com","",""]
             last_response.should be_ok
             last_response.body.should == "signed cert"
         end
@@ -159,28 +169,28 @@ describe R509::CertificateAuthority::Http::Server do
             last_response.body.should == "Serial must be provided"
         end
         it "when serial is given but not reason" do
-            @crl.should_receive(:revoke_cert).with(12345, 0).and_return(nil)
-            @crl.should_receive(:to_pem).and_return("generated crl")
+            @crls["test_ca"].should_receive(:revoke_cert).with(12345, 0).and_return(nil)
+            @crls["test_ca"].should_receive(:to_pem).and_return("generated crl")
             post "/1/certificate/revoke", "serial" => "12345"
             last_response.should be_ok
             last_response.body.should == "generated crl"
         end
         it "when serial and reason are given" do
-            @crl.should_receive(:revoke_cert).with(12345, 1).and_return(nil)
-            @crl.should_receive(:to_pem).and_return("generated crl")
+            @crls["test_ca"].should_receive(:revoke_cert).with(12345, 1).and_return(nil)
+            @crls["test_ca"].should_receive(:to_pem).and_return("generated crl")
             post "/1/certificate/revoke", "serial" => "12345", "reason" => "1"
             last_response.should be_ok
             last_response.body.should == "generated crl"
         end
         it "when serial is not an integer" do
-            @crl.should_receive(:revoke_cert).with(0, 0).and_raise(R509::R509Error.new("some r509 error"))
+            @crls["test_ca"].should_receive(:revoke_cert).with(0, 0).and_raise(R509::R509Error.new("some r509 error"))
             post "/1/certificate/revoke", "serial" => "foo"
             last_response.should_not be_ok
             last_response.body.should == "some r509 error"
         end
         it "when reason is not an integer" do
-            @crl.should_receive(:revoke_cert).with(12345, 0).and_return(nil)
-            @crl.should_receive(:to_pem).and_return("generated crl")
+            @crls["test_ca"].should_receive(:revoke_cert).with(12345, 0).and_return(nil)
+            @crls["test_ca"].should_receive(:to_pem).and_return("generated crl")
             post "/1/certificate/revoke", "serial" => "12345", "reason" => "foo"
             last_response.should be_ok
             last_response.body.should == "generated crl"
@@ -194,8 +204,8 @@ describe R509::CertificateAuthority::Http::Server do
             last_response.body.should == "Serial must be provided"
         end
         it "when serial is given" do
-            @crl.should_receive(:unrevoke_cert).with(12345).and_return(nil)
-            @crl.should_receive(:to_pem).and_return("generated crl")
+            @crls["test_ca"].should_receive(:unrevoke_cert).with(12345).and_return(nil)
+            @crls["test_ca"].should_receive(:to_pem).and_return("generated crl")
             post "/1/certificate/unrevoke", "serial" => "12345"
             last_response.should be_ok
             last_response.body.should == "generated crl"

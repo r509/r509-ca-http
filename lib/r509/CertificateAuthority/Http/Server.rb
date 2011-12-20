@@ -19,10 +19,17 @@ module R509
 
                     yaml_config = YAML::load(File.read("config.yaml"))
 
-                    config = R509::Config::CaConfig.from_yaml("ca", File.read("config.yaml"))
+                    config_pool = R509::Config::CaConfigPool.from_yaml("certificate_authorities", File.read("config.yaml"))
 
-                    set :crl, R509::Crl.new(config)
-                    set :ca, R509::CertificateAuthority::Signer.new(config)
+                    crls = {}
+                    certificate_authorities = {}
+                    config_pool.names.each do |name|
+                        crls[name] = R509::Crl.new(config_pool[name])
+                        certificate_authorities[name] = R509::CertificateAuthority::Signer.new(config_pool[name])
+                    end
+
+                    set :crls, crls
+                    set :certificate_authorities, certificate_authorities
                     set :subject_parser, R509::CertificateAuthority::Http::SubjectParser.new
                     set :validity_period_converter, R509::CertificateAuthority::Http::ValidityPeriodConverter.new
                     set :csr_factory, R509::CertificateAuthority::Http::Factory::CsrFactory.new
@@ -34,11 +41,11 @@ module R509
                 end
 
                 helpers do
-                    def crl
-                        settings.crl
+                    def crl(name)
+                        settings.crls[name]
                     end
-                    def ca
-                        settings.ca
+                    def ca(name)
+                        settings.certificate_authorities[name]
                     end
                     def subject_parser
                         settings.subject_parser
@@ -85,12 +92,12 @@ module R509
 
                 get '/1/crl/get/?' do
                     log.info "Get CRL"
-                    crl.to_pem
+                    crl("test_ca").to_pem
                 end
 
                 get '/1/crl/generate/?' do
                     log.info "Generate CRL"
-                    crl.generate_crl
+                    crl("test_ca").generate_crl
                 end
 
                 post '/1/certificate/issue/?' do
@@ -100,6 +107,12 @@ module R509
 
                     log.info params.inspect
 
+                    if not params.has_key?("ca")
+                        raise ArgumentError, "Must provide a CA"
+                    end
+                    if not ca(params["ca"])
+                        raise ArgumentError, "CA not found"
+                    end
                     if not params.has_key?("profile")
                         raise ArgumentError, "Must provide a CA profile"
                     end
@@ -132,7 +145,7 @@ module R509
 
                     if params.has_key?("csr")
                         csr = csr_factory.build(:csr => params["csr"])
-                        cert = ca.sign_cert(
+                        cert = ca(params["ca"]).sign_cert(
                             :csr => csr,
                             :profile_name => params["profile"],
                             :data_hash => data_hash,
@@ -141,7 +154,7 @@ module R509
                         )
                     elsif params.has_key?("spki")
                         spki = spki_factory.build(:spki => params["spki"], :subject => subject)
-                        cert = ca.sign_cert(
+                        cert = ca(params["ca"]).sign_cert(
                             :spki => spki,
                             :profile_name => params["profile"],
                             :data_hash => data_hash,
@@ -170,9 +183,9 @@ module R509
                         reason = 0
                     end
 
-                    crl.revoke_cert(serial.to_i, reason.to_i)
+                    crl("test_ca").revoke_cert(serial.to_i, reason.to_i)
 
-                    crl.to_pem
+                    crl("test_ca").to_pem
                 end
 
                 post '/1/certificate/unrevoke/?' do
@@ -183,9 +196,9 @@ module R509
                         raise ArgumentError, "Serial must be provided"
                     end
 
-                    crl.unrevoke_cert(serial.to_i)
+                    crl("test_ca").unrevoke_cert(serial.to_i)
 
-                    crl.to_pem
+                    crl("test_ca").to_pem
                 end
 
                 get '/test/certificate/issue/?' do
