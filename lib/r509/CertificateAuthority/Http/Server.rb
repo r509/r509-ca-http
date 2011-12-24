@@ -155,7 +155,7 @@ module R509
 
                     if params.has_key?("csr")
                         csr = csr_factory.build(:csr => params["csr"])
-                        cert = ca(params["ca"]).sign_cert(
+                        cert = ca(params["ca"]).sign(
                             :csr => csr,
                             :profile_name => params["profile"],
                             :data_hash => data_hash,
@@ -164,7 +164,7 @@ module R509
                         )
                     elsif params.has_key?("spki")
                         spki = spki_factory.build(:spki => params["spki"], :subject => subject)
-                        cert = ca(params["ca"]).sign_cert(
+                        cert = ca(params["ca"]).sign(
                             :spki => spki,
                             :profile_name => params["profile"],
                             :data_hash => data_hash,
