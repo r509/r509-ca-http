@@ -33,12 +33,12 @@ describe R509::CertificateAuthority::Http::SubjectParser do
         expect { subject = @parser.parse("validityPeriod=1095&subject[CN]=domain.com&subject[NOTATHING]=org&subject[L]=locality&data=blahblah") }.to raise_error(OpenSSL::X509::NameError)
     end
     it "when one of the subject components is just an OID" do
-        subject = @parser.parse("validityPeriod=1095&subject[CN]=domain.com&subject[1.3.6.1.4.1.311.60.2.1.3]=org&subject[L]=locality&data=blahblah")
+        subject = @parser.parse("validityPeriod=1095&subject[CN]=domain.com&subject[1.3.6.1.4.1.311.60.2.1.300]=org&subject[L]=locality&data=blahblah")
         subject.empty?.should == false
         subject["CN"].should == "domain.com"
-        subject["1.3.6.1.4.1.311.60.2.1.3"].should == "org"
+        subject["1.3.6.1.4.1.311.60.2.1.300"].should == "org"
         subject["L"].should == "locality"
-        subject.to_s.should == "/CN=domain.com/1.3.6.1.4.1.311.60.2.1.3=org/L=locality"
+        subject.to_s.should == "/CN=domain.com/1.3.6.1.4.1.311.60.2.1.300=org/L=locality"
     end
     it "when one of the subject components is an empty string" do
         subject = @parser.parse("validityPeriod=1095&subject[CN]=domain.com&subject[O]=&subject[L]=locality&data=blahblah")
