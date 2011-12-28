@@ -14,8 +14,8 @@ module R509
             class Server < Sinatra::Base
                 configure do
                     disable :protection #disable Rack::Protection (for speed)
-                    enable :logging
-                    #set :environment, :production
+                    disable :logging
+                    set :environment, :production
 
                     yaml_config = YAML::load(File.read("config.yaml"))
 
@@ -65,11 +65,11 @@ module R509
                 end
 
                 configure :production do
-                    set :log, Logger.new(STDOUT)
+                    set :log, Logger.new(nil)
                 end
 
                 configure :development do
-                    set :log, Logger.new(STDOUT)
+                    set :log, Logger.new(nil)
                 end
 
                 configure :test do
@@ -82,6 +82,7 @@ module R509
 
                 error StandardError do
                     log.error env["sinatra.error"].inspect
+                    log.error env["sinatra.error"].backtrace.join("\n")
                     env["sinatra.error"].message
                 end
 
@@ -91,7 +92,7 @@ module R509
                 end
 
                 get '/1/crl/:ca/get/?' do
-                    log.info "Get CRL"
+                    log.info "Get CRL for #{params[:ca]}"
 
                     if not crl(params[:ca])
                         raise ArgumentError, "CA not found"
@@ -101,7 +102,7 @@ module R509
                 end
 
                 get '/1/crl/:ca/generate/?' do
-                    log.info "Generate CRL"
+                    log.info "Generate CRL for #{params[:ca]}"
 
                     if not crl(params[:ca])
                         raise ArgumentError, "CA not found"
@@ -182,10 +183,10 @@ module R509
                 end
 
                 post '/1/certificate/revoke/?' do
-                    log.info "Revoke Certificate"
                     ca = params[:ca]
                     serial = params[:serial]
                     reason = params[:reason]
+                    log.info "Revoke for serial #{serial} on CA #{ca}"
 
                     if not ca
                         raise ArgumentError, "CA must be provided"
@@ -206,9 +207,9 @@ module R509
                 end
 
                 post '/1/certificate/unrevoke/?' do
-                    log.info "Unrevoke Certificate"
                     ca = params[:ca]
                     serial = params[:serial]
+                    log.info "Unrevoke for serial #{serial} on CA #{ca}"
 
                     if not ca
                         raise ArgumentError, "CA must be provided"
@@ -226,6 +227,7 @@ module R509
                 end
 
                 get '/test/certificate/issue/?' do
+                    log.info "Loaded test issuance interface"
                     content_type :html
                     erb :test_issue
                 end
