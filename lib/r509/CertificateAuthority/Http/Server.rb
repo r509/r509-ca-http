@@ -77,6 +77,8 @@ module R509
                 end
 
                 error do
+                    log.error env["sinatra.error"].inspect
+                    log.error env["sinatra.error"].backtrace.join("\n")
                     "Something is amiss with our CA. You should ... wait?"
                 end
 
