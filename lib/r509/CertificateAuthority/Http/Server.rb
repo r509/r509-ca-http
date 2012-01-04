@@ -28,6 +28,7 @@ module R509
                         certificate_authorities[name] = R509::CertificateAuthority::Signer.new(config_pool[name])
                     end
 
+                    set :config_pool, config_pool
                     set :crls, crls
                     set :certificate_authorities, certificate_authorities
                     set :subject_parser, R509::CertificateAuthority::Http::SubjectParser.new
@@ -232,6 +233,18 @@ module R509
                     log.info "Loaded test issuance interface"
                     content_type :html
                     erb :test_issue
+                end
+
+                get '/test/certificate/revoke/?' do
+                    log.info "Loaded test revoke interface"
+                    content_type :html
+                    erb :test_revoke
+                end
+                
+                get '/test/certificate/unrevoke/?' do
+                    log.info "Loaded test unrevoke interface"
+                    content_type :html
+                    erb :test_unrevoke
                 end
             end
         end
