@@ -1,9 +1,9 @@
 require 'rubygems' if RUBY_VERSION < "1.9"
 require 'sinatra/base'
 require 'r509'
-require "#{File.dirname(__FILE__)}/SubjectParser"
-require "#{File.dirname(__FILE__)}/ValidityPeriodConverter"
-require "#{File.dirname(__FILE__)}/Factory"
+require "#{File.dirname(__FILE__)}/subjectparser"
+require "#{File.dirname(__FILE__)}/validityperiodconverter"
+require "#{File.dirname(__FILE__)}/factory"
 require 'base64'
 require 'yaml'
 require 'logger'
@@ -240,7 +240,7 @@ module R509
                     content_type :html
                     erb :test_revoke
                 end
-                
+
                 get '/test/certificate/unrevoke/?' do
                     log.info "Loaded test unrevoke interface"
                     content_type :html
