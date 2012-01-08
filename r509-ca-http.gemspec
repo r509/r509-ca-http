@@ -1,5 +1,5 @@
 $:.push File.expand_path("../lib", __FILE__)
-require "r509/CertificateAuthority/Http/Version"
+require "r509/certificateauthority/http/version"
 
 spec = Gem::Specification.new do |s|
   s.name = 'r509-ca-http'
