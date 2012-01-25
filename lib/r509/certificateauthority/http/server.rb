@@ -7,28 +7,27 @@ require "#{File.dirname(__FILE__)}/factory"
 require 'base64'
 require 'yaml'
 require 'logger'
+require 'dependo'
 
 module R509
     module CertificateAuthority
         module Http
             class Server < Sinatra::Base
+                extend Dependo::Mixin
+                include Dependo::Mixin
+
                 configure do
                     disable :protection #disable Rack::Protection (for speed)
                     disable :logging
                     set :environment, :production
 
-                    yaml_config = YAML::load(File.read("config.yaml"))
-
-                    config_pool = R509::Config::CaConfigPool.from_yaml("certificate_authorities", File.read("config.yaml"))
-
                     crls = {}
                     certificate_authorities = {}
                     config_pool.names.each do |name|
-                        crls[name] = R509::Crl.new(config_pool[name])
+                        crls[name] = R509::Crl::Administrator.new(config_pool[name])
                         certificate_authorities[name] = R509::CertificateAuthority::Signer.new(config_pool[name])
                     end
 
-                    set :config_pool, config_pool
                     set :crls, crls
                     set :certificate_authorities, certificate_authorities
                     set :subject_parser, R509::CertificateAuthority::Http::SubjectParser.new
@@ -60,21 +59,6 @@ module R509
                     def spki_factory
                         settings.spki_factory
                     end
-                    def log
-                        settings.log
-                    end
-                end
-
-                configure :production do
-                    set :log, Logger.new(nil)
-                end
-
-                configure :development do
-                    set :log, Logger.new(nil)
-                end
-
-                configure :test do
-                    set :log, Logger.new(nil)
                 end
 
                 error do
@@ -86,7 +70,7 @@ module R509
                 error StandardError do
                     log.error env["sinatra.error"].inspect
                     log.error env["sinatra.error"].backtrace.join("\n")
-                    env["sinatra.error"].message
+                    env["sinatra.error"].inspect
                 end
 
                 get '/favicon.ico' do

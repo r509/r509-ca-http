@@ -1,8 +1,13 @@
 require File.dirname(__FILE__) + '/spec_helper'
 require "openssl"
 
-
 describe R509::CertificateAuthority::Http::Server do
+    before :all do
+        #config_pool registry is in spec_helper because we need to register it
+        #BEFORE we include r509-ca-http
+        Dependo::Registry[:log] = Logger.new(nil)
+    end
+
     before :each do
         @crls = { "test_ca" => double("crl") }
         @certificate_authorities = { "test_ca" => double("test_ca") }
@@ -33,7 +38,7 @@ describe R509::CertificateAuthority::Http::Server do
         it "when CA is not found" do
             get "/1/crl/bogus/get/"
             last_response.status.should == 500
-            last_response.body.should == "CA not found"
+            last_response.body.should == "#<ArgumentError: CA not found>"
         end
     end
 
@@ -47,7 +52,7 @@ describe R509::CertificateAuthority::Http::Server do
         it "when CA is not found" do
             get "/1/crl/bogus/generate/"
             last_response.status.should == 500
-            last_response.body.should == "CA not found"
+            last_response.body.should == "#<ArgumentError: CA not found>"
         end
     end
 
@@ -55,38 +60,38 @@ describe R509::CertificateAuthority::Http::Server do
         it "when no parameters are given" do
             post "/1/certificate/issue"
             last_response.should_not be_ok
-            last_response.body.should == "Must provide a CA"
+            last_response.body.should == "#<ArgumentError: Must provide a CA>"
         end
         it "when there's a profile, subject, CSR, validity period, but no ca" do
             post "/1/certificate/issue", "profile" => "my profile", "subject" => "subject", "csr" => "my csr", "validityPeriod" => 365
             last_response.should_not be_ok
-            last_response.body.should == "Must provide a CA"
+            last_response.body.should == "#<ArgumentError: Must provide a CA>"
         end
         it "when there's a ca, profile, subject, CSR, but no validity period" do
             post "/1/certificate/issue", "ca" => "test_ca", "profile" => "my profile", "subject" => "subject", "csr" => "my csr"
             last_response.should_not be_ok
-            last_response.body.should == "Must provide a validity period"
+            last_response.body.should == "#<ArgumentError: Must provide a validity period>"
         end
         it "when there's a ca, profile, subject, validity period, but no CSR" do
             post "/1/certificate/issue", "ca" => "test_ca", "profile" => "my profile", "subject" => "subject", "validityPeriod" => 365
             last_response.should_not be_ok
-            last_response.body.should == "Must provide a CSR or SPKI"
+            last_response.body.should == "#<ArgumentError: Must provide a CSR or SPKI>"
         end
         it "when there's a ca, profile, CSR, validity period, but no subject" do
             @subject_parser.should_receive(:parse).with(anything, "subject").and_return(R509::Subject.new)
             post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "validityPeriod" => 365, "csr" => "csr"
             last_response.should_not be_ok
-            last_response.body.should == "Must provide a subject"
+            last_response.body.should == "#<ArgumentError: Must provide a subject>"
         end
         it "when there's a ca, subject, CSR, validity period, but no profile" do
             post "/1/certificate/issue", "ca" => "test_ca", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr"
             last_response.should_not be_ok
-            last_response.body.should == "Must provide a CA profile"
+            last_response.body.should == "#<ArgumentError: Must provide a CA profile>"
         end
         it "when the given CA is not found" do
             post "/1/certificate/issue", "ca" => "some bogus CA"
             last_response.should_not be_ok
-            last_response.body.should == "CA not found"
+            last_response.body.should == "#<ArgumentError: CA not found>"
         end
         it "fails to issue" do
             csr = double("csr")
@@ -98,7 +103,7 @@ describe R509::CertificateAuthority::Http::Server do
 
             post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr"
             last_response.should_not be_ok
-            last_response.body.should == "failed to issue because of: good reason"
+            last_response.body.should == "#<R509::R509Error: failed to issue because of: good reason>"
         end
         it "issues a CSR with no SAN extensions" do
             csr = double("csr")
@@ -176,17 +181,17 @@ describe R509::CertificateAuthority::Http::Server do
         it "when no CA is given" do
             post "/1/certificate/revoke", "serial" => "foo"
             last_response.status.should == 500
-            last_response.body.should == "CA must be provided"
+            last_response.body.should == "#<ArgumentError: CA must be provided>"
         end
         it "when CA is not found" do
             post "/1/certificate/revoke", "ca" => "bogus ca name", "serial" => "foo"
             last_response.status.should == 500
-            last_response.body.should == "CA not found"
+            last_response.body.should == "#<ArgumentError: CA not found>"
         end
         it "when no serial is given" do
             post "/1/certificate/revoke", "ca" => "test_ca"
             last_response.should_not be_ok
-            last_response.body.should == "Serial must be provided"
+            last_response.body.should == "#<ArgumentError: Serial must be provided>"
         end
         it "when serial is given but not reason" do
             @crls["test_ca"].should_receive(:revoke_cert).with(12345, 0).and_return(nil)
@@ -206,7 +211,7 @@ describe R509::CertificateAuthority::Http::Server do
             @crls["test_ca"].should_receive(:revoke_cert).with(0, 0).and_raise(R509::R509Error.new("some r509 error"))
             post "/1/certificate/revoke", "ca" => "test_ca", "serial" => "foo"
             last_response.should_not be_ok
-            last_response.body.should == "some r509 error"
+            last_response.body.should == "#<R509::R509Error: some r509 error>"
         end
         it "when reason is not an integer" do
             @crls["test_ca"].should_receive(:revoke_cert).with(12345, 0).and_return(nil)
@@ -221,17 +226,17 @@ describe R509::CertificateAuthority::Http::Server do
         it "when no CA is given" do
             post "/1/certificate/unrevoke", "serial" => "foo"
             last_response.status.should == 500
-            last_response.body.should == "CA must be provided"
+            last_response.body.should == "#<ArgumentError: CA must be provided>"
         end
         it "when CA is not found" do
             post "/1/certificate/unrevoke", "ca" => "bogus ca", "serial" => "foo"
             last_response.status.should == 500
-            last_response.body.should == "CA not found"
+            last_response.body.should == "#<ArgumentError: CA not found>"
         end
         it "when no serial is given" do
             post "/1/certificate/unrevoke", "ca" => "test_ca"
             last_response.should_not be_ok
-            last_response.body.should == "Serial must be provided"
+            last_response.body.should == "#<ArgumentError: Serial must be provided>"
         end
         it "when serial is given" do
             @crls["test_ca"].should_receive(:unrevoke_cert).with(12345).and_return(nil)
