@@ -10,6 +10,7 @@ spec = Gem::Specification.new do |s|
   s.description = 'A CA API. What, you want more info?'
   s.add_dependency 'r509'
   s.add_dependency 'sinatra'
+  s.add_dependency 'dependo'
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'rack-test'
   s.add_development_dependency 'rake'
