@@ -5,7 +5,6 @@ spec = Gem::Specification.new do |s|
   s.name = 'r509-ca-http'
   s.version = R509::CertificateAuthority::Http::VERSION
   s.platform = Gem::Platform::RUBY
-  s.has_rdoc = false
   s.summary = "A (relatively) simple certificate authority API written to work with r509"
   s.description = 'A CA API. What, you want more info?'
   s.add_dependency 'r509'
