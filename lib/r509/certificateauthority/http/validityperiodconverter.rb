@@ -9,7 +9,7 @@ module R509::CertificateAuthority::Http
             end
             {
                 :not_before => Time.now - 6 * 60 * 60,
-                :not_after => Time.now + validity_period.to_i *  24 * 60 * 60,
+                :not_after => Time.now + validity_period.to_i,
             }
         end
     end
