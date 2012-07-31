@@ -101,6 +101,7 @@ module R509
                 post '/1/certificate/issue/?' do
                     log.info "Issue Certificate"
                     raw = request.env["rack.input"].read
+                    env["rack.input"].rewind
                     log.info raw
 
                     log.info params.inspect
