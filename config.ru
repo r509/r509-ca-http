@@ -2,7 +2,9 @@ require 'r509'
 require 'dependo'
 require 'logger'
 #require 'r509/middleware/validity'
+#require 'r509/middleware/certwriter'
 
+#use R509::Middleware::Certwriter
 #use R509::Middleware::Validity
 
 config_data = File.read("config.yaml")
