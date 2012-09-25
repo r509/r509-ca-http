@@ -8,17 +8,17 @@ You need r509 and sinatra. For development/tests you need rack-test and rspec.
 
 ## API
 
-```GET /1/crl/:ca/get```
+### GET /1/crl/:ca/get
 
 Get the most recently generate CRL for the given ```:ca```.
 
 A new CRL is generated when a certificate is revoked or unrevoked, or if you explicitly generate it.
 
-```GET /1/crl/:ca/generate```
+### GET /1/crl/:ca/generate
 
 Explicitly generate and get a new CRL for the given ```:ca```.
 
-```POST /1/certificate/issue```
+### POST /1/certificate/issue
 
 Issue a certificate.
 
@@ -44,7 +44,7 @@ SAN names are provided like so:
 
 The issue method will return the PEM text of the issued certificate.
 
-```POST /1/certificate/revoke```
+### POST /1/certificate/revoke
 
 Revoke a certificate.
 
@@ -59,7 +59,7 @@ Optional POST parameters:
 
 The revoke method returns the newly generated CRL, after revocation.
 
-```POST /1/certificate/unrevoke```
+### POST /1/certificate/unrevoke
 
 Unrevoke a certificate. (IE, remove it from the CRL and return its OCSP status to valid.)
 
@@ -74,11 +74,11 @@ The unrevoke method returns the newly generated CRL, after the certificate was r
 
 These pages are present on the server, for you to work with the CA with a basic web interface. You should _not_ expose these endpoints to anyone.
 
-```/test/certificate/issue```
+- /test/certificate/issue
 
-```/test/certificate/revoke```
+- /test/certificate/revoke
 
-```/test/certificate/unrevoke```
+- /test/certificate/unrevoke
 
 ## certificate\_authorities (config.yaml)
 
