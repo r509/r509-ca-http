@@ -16,3 +16,6 @@ certificate_authorities: {
         }
     }
 }
+certwriter: {
+    path: "/path/to/issued/certs/directory"
+}
