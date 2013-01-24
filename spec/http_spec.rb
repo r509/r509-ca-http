@@ -195,14 +195,18 @@ describe R509::CertificateAuthority::Http::Server do
         end
         it "when serial is given but not reason" do
             @crls["test_ca"].should_receive(:revoke_cert).with(12345, 0).and_return(nil)
-            @crls["test_ca"].should_receive(:to_pem).and_return("generated crl")
+            crl_list = double("crl-list")
+            @crls["test_ca"].should_receive(:crl).and_return(crl_list)
+            crl_list.should_receive(:to_pem).and_return("generated crl")
             post "/1/certificate/revoke", "ca" => "test_ca", "serial" => "12345"
             last_response.should be_ok
             last_response.body.should == "generated crl"
         end
         it "when serial and reason are given" do
             @crls["test_ca"].should_receive(:revoke_cert).with(12345, 1).and_return(nil)
-            @crls["test_ca"].should_receive(:to_pem).and_return("generated crl")
+            crl_list = double("crl-list")
+            @crls["test_ca"].should_receive(:crl).and_return(crl_list)
+            crl_list.should_receive(:to_pem).and_return("generated crl")
             post "/1/certificate/revoke", "ca" => "test_ca", "serial" => "12345", "reason" => "1"
             last_response.should be_ok
             last_response.body.should == "generated crl"
@@ -215,7 +219,9 @@ describe R509::CertificateAuthority::Http::Server do
         end
         it "when reason is not an integer" do
             @crls["test_ca"].should_receive(:revoke_cert).with(12345, 0).and_return(nil)
-            @crls["test_ca"].should_receive(:to_pem).and_return("generated crl")
+            crl_list = double("crl-list")
+            @crls["test_ca"].should_receive(:crl).and_return(crl_list)
+            crl_list.should_receive(:to_pem).and_return("generated crl")
             post "/1/certificate/revoke", "ca" => "test_ca", "serial" => "12345", "reason" => "foo"
             last_response.should be_ok
             last_response.body.should == "generated crl"
@@ -240,7 +246,9 @@ describe R509::CertificateAuthority::Http::Server do
         end
         it "when serial is given" do
             @crls["test_ca"].should_receive(:unrevoke_cert).with(12345).and_return(nil)
-            @crls["test_ca"].should_receive(:to_pem).and_return("generated crl")
+            crl_list = double("crl-list")
+            @crls["test_ca"].should_receive(:crl).and_return(crl_list)
+            crl_list.should_receive(:to_pem).and_return("generated crl")
             post "/1/certificate/unrevoke", "ca" => "test_ca", "serial" => "12345"
             last_response.should be_ok
             last_response.body.should == "generated crl"

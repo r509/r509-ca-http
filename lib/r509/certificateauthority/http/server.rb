@@ -191,7 +191,7 @@ module R509
 
                     crl(ca).revoke_cert(serial.to_i, reason.to_i)
 
-                    crl(ca).to_pem
+                    crl(ca).crl.to_pem
                 end
 
                 post '/1/certificate/unrevoke/?' do
@@ -211,7 +211,7 @@ module R509
 
                     crl(ca).unrevoke_cert(serial.to_i)
 
-                    crl(ca).to_pem
+                    crl(ca).crl.to_pem
                 end
 
                 get '/test/certificate/issue/?' do
