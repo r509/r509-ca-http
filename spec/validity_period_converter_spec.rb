@@ -1,8 +1,8 @@
 require File.dirname(__FILE__) + "/spec_helper"
 
-describe R509::CertificateAuthority::Http::ValidityPeriodConverter do
+describe R509::CertificateAuthority::HTTP::ValidityPeriodConverter do
     before :all do
-        @converter = R509::CertificateAuthority::Http::ValidityPeriodConverter.new
+        @converter = R509::CertificateAuthority::HTTP::ValidityPeriodConverter.new
     end
 
     it "when validity period is nil" do

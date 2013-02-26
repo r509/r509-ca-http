@@ -1,7 +1,7 @@
 module R509
-    module CertificateAuthority
-        module Http
-            VERSION="0.1"
-        end
+  module CertificateAuthority
+    module HTTP
+      VERSION="0.1"
     end
+  end
 end
