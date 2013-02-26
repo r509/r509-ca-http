@@ -1,8 +1,8 @@
 require File.dirname(__FILE__) + '/spec_helper'
 
-describe R509::CertificateAuthority::Http::SubjectParser do
+describe R509::CertificateAuthority::HTTP::SubjectParser do
     before :all do
-        @parser = R509::CertificateAuthority::Http::SubjectParser.new
+        @parser = R509::CertificateAuthority::HTTP::SubjectParser.new
     end
 
     it "when the query string is nil" do
