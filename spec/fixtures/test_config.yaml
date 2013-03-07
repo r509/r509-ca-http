@@ -4,7 +4,7 @@ certificate_authorities: {
       cert: "test_ca.cer",
       key: "test_ca.key"
     },
-    cdp_location: 'URI:http://crl.domain.com/test_ca.crl',
+    cdp_location: ['http://crl.domain.com/test_ca.crl'],
     message_digest: 'SHA1', #SHA1, SHA256, SHA512 supported. MD5 too, but you really shouldn't use that unless you have a good reason
     profiles: {
       server: {

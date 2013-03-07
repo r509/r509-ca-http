@@ -99,7 +99,7 @@ describe R509::CertificateAuthority::HTTP::Server do
       @validity_period_converter.should_receive(:convert).with("365").and_return({:not_before => 1, :not_after => 2})
       subject = R509::Subject.new [["CN", "domain.com"]]
       @subject_parser.should_receive(:parse).with(anything, "subject").and_return(subject)
-      @certificate_authorities["test_ca"].should_receive(:sign).with(:csr => csr, :profile_name => "profile", :data_hash => {:subject => subject, :san_names => []}, :not_before => 1, :not_after => 2).and_raise(R509::R509Error.new("failed to issue because of: good reason"))
+      @certificate_authorities["test_ca"].should_receive(:sign).with(:csr => csr, :profile_name => "profile", :subject => subject, :san_names => [], :not_before => 1, :not_after => 2).and_raise(R509::R509Error.new("failed to issue because of: good reason"))
 
       post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr"
       last_response.should_not be_ok
@@ -112,7 +112,7 @@ describe R509::CertificateAuthority::HTTP::Server do
       subject = R509::Subject.new [["CN", "domain.com"]]
       @subject_parser.should_receive(:parse).with(anything, "subject").and_return(subject)
       cert = double("cert")
-      @certificate_authorities["test_ca"].should_receive(:sign).with(:csr => csr, :profile_name => "profile", :data_hash => {:subject => subject, :san_names => []}, :not_before => 1, :not_after => 2).and_return(cert)
+      @certificate_authorities["test_ca"].should_receive(:sign).with(:csr => csr, :profile_name => "profile", :subject => subject, :san_names => [], :not_before => 1, :not_after => 2).and_return(cert)
       cert.should_receive(:to_pem).and_return("signed cert")
 
       post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr"
@@ -126,7 +126,7 @@ describe R509::CertificateAuthority::HTTP::Server do
       subject = R509::Subject.new [["CN", "domain.com"]]
       @subject_parser.should_receive(:parse).with(anything, "subject").and_return(subject)
       cert = double("cert")
-      @certificate_authorities["test_ca"].should_receive(:sign).with(:csr => csr, :profile_name => "profile", :data_hash => {:subject => subject, :san_names => ["domain1.com", "domain2.com"]}, :not_before => 1, :not_after => 2).and_return(cert)
+      @certificate_authorities["test_ca"].should_receive(:sign).with(:csr => csr, :profile_name => "profile", :subject => subject, :san_names => ["domain1.com", "domain2.com"], :not_before => 1, :not_after => 2).and_return(cert)
       cert.should_receive(:to_pem).and_return("signed cert")
 
       post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr", "extensions[subjectAlternativeName][]" => ["domain1.com","domain2.com"]
@@ -140,7 +140,7 @@ describe R509::CertificateAuthority::HTTP::Server do
       spki = double("spki")
       @spki_factory.should_receive(:build).with(:spki => "spki", :subject => subject).and_return(spki)
       cert = double("cert")
-      @certificate_authorities["test_ca"].should_receive(:sign).with(:spki => spki, :profile_name => "profile", :data_hash => {:subject => subject, :san_names => []}, :not_before => 1, :not_after => 2).and_return(cert)
+      @certificate_authorities["test_ca"].should_receive(:sign).with(:spki => spki, :profile_name => "profile", :subject => subject, :san_names => [], :not_before => 1, :not_after => 2).and_return(cert)
       cert.should_receive(:to_pem).and_return("signed cert")
 
       post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "spki" => "spki"
@@ -154,7 +154,7 @@ describe R509::CertificateAuthority::HTTP::Server do
       spki = double("spki")
       @spki_factory.should_receive(:build).with(:spki => "spki", :subject => subject).and_return(spki)
       cert = double("cert")
-      @certificate_authorities["test_ca"].should_receive(:sign).with(:spki => spki, :profile_name => "profile", :data_hash => {:subject => subject, :san_names => ["domain1.com", "domain2.com"]}, :not_before => 1, :not_after => 2).and_return(cert)
+      @certificate_authorities["test_ca"].should_receive(:sign).with(:spki => spki, :profile_name => "profile", :subject => subject, :san_names => ["domain1.com", "domain2.com"], :not_before => 1, :not_after => 2).and_return(cert)
       cert.should_receive(:to_pem).and_return("signed cert")
 
       post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "spki" => "spki", "extensions[subjectAlternativeName][]" => ["domain1.com","domain2.com"]
@@ -168,7 +168,7 @@ describe R509::CertificateAuthority::HTTP::Server do
       subject = R509::Subject.new [["CN", "domain.com"]]
       @subject_parser.should_receive(:parse).with(anything, "subject").and_return(subject)
       cert = double("cert")
-      @certificate_authorities["test_ca"].should_receive(:sign).with(:csr => csr, :profile_name => "profile", :data_hash => {:subject => subject, :san_names => ["domain1.com", "domain2.com"]}, :not_before => 1, :not_after => 2).and_return(cert)
+      @certificate_authorities["test_ca"].should_receive(:sign).with(:csr => csr, :profile_name => "profile", :subject => subject, :san_names => ["domain1.com", "domain2.com"], :not_before => 1, :not_after => 2).and_return(cert)
       cert.should_receive(:to_pem).and_return("signed cert")
 
       post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr", "extensions[subjectAlternativeName][]" => ["domain1.com","domain2.com","",""]
