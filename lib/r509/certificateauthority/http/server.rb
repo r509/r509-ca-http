@@ -134,11 +134,6 @@ module R509
             san_names = []
           end
 
-          data_hash = {
-            :subject => subject,
-            :san_names => san_names
-          }
-
           validity_period = validity_period_converter.convert(params["validityPeriod"])
 
           if params.has_key?("csr")
@@ -146,7 +141,8 @@ module R509
             cert = ca(params["ca"]).sign(
               :csr => csr,
               :profile_name => params["profile"],
-              :data_hash => data_hash,
+              :subject => subject,
+              :san_names => san_names,
               :not_before => validity_period[:not_before],
               :not_after => validity_period[:not_after]
             )
@@ -155,7 +151,8 @@ module R509
             cert = ca(params["ca"]).sign(
               :spki => spki,
               :profile_name => params["profile"],
-              :data_hash => data_hash,
+              :subject => subject,
+              :san_names => san_names,
               :not_before => validity_period[:not_before],
               :not_after => validity_period[:not_after]
             )
