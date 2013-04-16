@@ -7,7 +7,7 @@ spec = Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY
   s.summary = "A (relatively) simple certificate authority API written to work with r509"
   s.description = 'A CA API. What, you want more info?'
-  s.add_dependency 'r509'
+  s.add_dependency 'r509', '~> 0.9'
   s.add_dependency 'sinatra'
   s.add_dependency 'dependo'
   s.add_development_dependency 'rspec'
