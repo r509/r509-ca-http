@@ -181,11 +181,12 @@ module R509
           if not serial
             raise ArgumentError, "Serial must be provided"
           end
-          if not reason
-            reason = 0
+
+          if not reason.nil? and reason.empty?
+            reason = nil
           end
 
-          crl(ca).revoke_cert(serial.to_i, reason.to_i)
+          crl(ca).revoke_cert(serial, reason)
 
           crl(ca).crl.to_pem
         end
