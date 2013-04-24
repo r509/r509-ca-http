@@ -55,7 +55,7 @@ Required POST parameters:
 
 Optional POST parameters:
 
-- reason (must be an integer, if it's not provided it defaults to 0)
+- reason (must be an integer or nil. nil by default)
 
 The revoke method returns the newly generated CRL, after revocation.
 
