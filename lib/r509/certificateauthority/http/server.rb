@@ -130,6 +130,11 @@ module R509
 
           if params.has_key?("extensions") and params["extensions"].has_key?("subjectAlternativeName")
             san_names = params["extensions"]["subjectAlternativeName"].select { |name| not name.empty? }
+          elsif params.has_key?("extensions") and params["extensions"].has_key?("dNSNames")
+            san_names = R509::ASN1::GeneralNames.new
+            params["extensions"]["dNSNames"].select{ |name| not name.empty? }.each do |name|
+              san_names.create_item(:tag => 2, :value => name.strip)
+            end
           else
             san_names = []
           end
