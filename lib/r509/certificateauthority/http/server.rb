@@ -22,13 +22,16 @@ module R509
 
           crls = {}
           certificate_authorities = {}
+          profile_enforcers = {}
           config_pool.names.each do |name|
             crls[name] = R509::CRL::Administrator.new(config_pool[name])
+            profile_enforcers[name] = R509::CertificateAuthority::ProfileEnforcer.new(config_pool[name])
             certificate_authorities[name] = R509::CertificateAuthority::Signer.new(config_pool[name])
           end
 
           set :crls, crls
           set :certificate_authorities, certificate_authorities
+          set :profile_enforcers, profile_enforcers
           set :subject_parser, R509::CertificateAuthority::HTTP::SubjectParser.new
           set :validity_period_converter, R509::CertificateAuthority::HTTP::ValidityPeriodConverter.new
           set :csr_factory, R509::CertificateAuthority::HTTP::Factory::CSRFactory.new
@@ -45,6 +48,9 @@ module R509
           end
           def ca(name)
             settings.certificate_authorities[name]
+          end
+          def profile_enforcer(name)
+            settings.profile_enforcers[name]
           end
           def subject_parser
             settings.subject_parser
@@ -143,24 +149,32 @@ module R509
 
           if params.has_key?("csr")
             csr = csr_factory.build(:csr => params["csr"])
-            cert = ca(params["ca"]).sign(
+            signer_opts = profile_enforcer(params["ca"]).enforce(
               :csr => csr,
               :profile_name => params["profile"],
               :subject => subject,
               :san_names => san_names,
-              :not_before => validity_period[:not_before],
-              :not_after => validity_period[:not_after]
+              :message_digest => params["message_digest"]
             )
+            signer_opts.merge!(
+              :not_before => validity_period[:not_before],
+              :not_after => validity_period[:not_after],
+            )
+            cert = ca(params["ca"]).sign(signer_opts)
           elsif params.has_key?("spki")
             spki = spki_factory.build(:spki => params["spki"], :subject => subject)
-            cert = ca(params["ca"]).sign(
+            signer_opts = profile_enforcer(params["ca"]).enforce(
               :spki => spki,
               :profile_name => params["profile"],
               :subject => subject,
               :san_names => san_names,
-              :not_before => validity_period[:not_before],
-              :not_after => validity_period[:not_after]
+              :message_digest => params["message_digest"]
             )
+            signer_opts.merge!(
+              :not_before => validity_period[:not_before],
+              :not_after => validity_period[:not_after],
+            )
+            cert = ca(params["ca"]).sign(signer_opts)
           else
             raise ArgumentError, "Must provide a CSR or SPKI"
           end
