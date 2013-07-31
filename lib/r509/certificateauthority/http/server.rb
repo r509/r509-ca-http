@@ -100,7 +100,7 @@ module R509
             raise ArgumentError, "CA not found"
           end
 
-          crl(params[:ca]).generate_crl
+          crl(params[:ca]).generate_crl.to_pem
         end
 
         post '/1/certificate/issue/?' do
@@ -207,7 +207,7 @@ module R509
 
           crl(ca).revoke_cert(serial, reason)
 
-          crl(ca).crl.to_pem
+          crl(ca).generate_crl.to_pem
         end
 
         post '/1/certificate/unrevoke/?' do
@@ -227,7 +227,7 @@ module R509
 
           crl(ca).unrevoke_cert(serial.to_i)
 
-          crl(ca).crl.to_pem
+          crl(ca).generate_crl.to_pem
         end
 
         get '/test/certificate/issue/?' do
