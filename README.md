@@ -37,12 +37,15 @@ The subject is provided like so:
 Optional POST parameters:
 
 - extensions[subjectAlternativeName]
+- message\_digest
 
 SAN names are provided like so:
 
     extensions[subjectAlternativeName][]=domain1.com&extensions[subjectAlternativeName][]=domain2.com
 
 The issue method will return the PEM text of the issued certificate.
+
+Please note that all fields subject/extension request fields encoded in a CSR are ignored in favor of the POST parameters.
 
 ### POST /1/certificate/revoke
 
@@ -84,7 +87,7 @@ These pages are present on the server, for you to work with the CA with a basic 
 
 You use the ```config.yaml``` file to specify information about your certificate authority. You can operate multiple certificate authorities, each of which can have multiple profiles, with one instance of r509-ca-http.
 
-Information about how to construct the YAML can be found at [the official r509 documentation](https://github.com/reaperhulk/r509#config).
+Information about how to construct the YAML can be found at [the official r509 documentation](https://github.com/reaperhulk/r509).
 
 ## Middleware (config.ru)
 

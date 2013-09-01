@@ -9,12 +9,16 @@ certificate_authorities:
         basic_constraints:
           :ca: false
         key_usage:
-        - digitalSignature
-        - keyEncipherment
+          :value:
+          - digitalSignature
+          - keyEncipherment
         extended_key_usage:
-        - serverAuth
-        cdp_location:
-        - http://crl.domain.com/test_ca.crl
+          :value:
+          - serverAuth
+        crl_distribution_points:
+          :value:
+          - :type: URI
+            :value: http://crl.domain.com/test_ca.crl
         default_md: SHA1
         allowed_mds:
         - SHA1

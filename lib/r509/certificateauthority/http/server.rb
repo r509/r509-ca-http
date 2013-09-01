@@ -22,16 +22,16 @@ module R509
 
           crls = {}
           certificate_authorities = {}
-          profile_enforcers = {}
+          options_builders = {}
           config_pool.names.each do |name|
             crls[name] = R509::CRL::Administrator.new(config_pool[name])
-            profile_enforcers[name] = R509::CertificateAuthority::ProfileEnforcer.new(config_pool[name])
+            options_builders[name] = R509::CertificateAuthority::OptionsBuilder.new(config_pool[name])
             certificate_authorities[name] = R509::CertificateAuthority::Signer.new(config_pool[name])
           end
 
           set :crls, crls
           set :certificate_authorities, certificate_authorities
-          set :profile_enforcers, profile_enforcers
+          set :options_builders, options_builders
           set :subject_parser, R509::CertificateAuthority::HTTP::SubjectParser.new
           set :validity_period_converter, R509::CertificateAuthority::HTTP::ValidityPeriodConverter.new
           set :csr_factory, R509::CertificateAuthority::HTTP::Factory::CSRFactory.new
@@ -49,8 +49,8 @@ module R509
           def ca(name)
             settings.certificate_authorities[name]
           end
-          def profile_enforcer(name)
-            settings.profile_enforcers[name]
+          def builder(name)
+            settings.options_builders[name]
           end
           def subject_parser
             settings.subject_parser
@@ -134,43 +134,44 @@ module R509
             raise ArgumentError, "Must provide a subject"
           end
 
+          extensions = []
           if params.has_key?("extensions") and params["extensions"].has_key?("subjectAlternativeName")
             san_names = params["extensions"]["subjectAlternativeName"].select { |name| not name.empty? }
+            if not san_names.empty?
+              extensions.push(R509::Cert::Extensions::SubjectAlternativeName.new(:value => R509::ASN1.general_name_parser(san_names)))
+            end
           elsif params.has_key?("extensions") and params["extensions"].has_key?("dNSNames")
             san_names = R509::ASN1::GeneralNames.new
             params["extensions"]["dNSNames"].select{ |name| not name.empty? }.each do |name|
               san_names.create_item(:tag => 2, :value => name.strip)
             end
-          else
-            san_names = []
+            if not san_names.names.empty?
+              extensions.push(R509::Cert::Extensions::SubjectAlternativeName.new(:value => san_names))
+            end
           end
 
           validity_period = validity_period_converter.convert(params["validityPeriod"])
 
           if params.has_key?("csr")
             csr = csr_factory.build(:csr => params["csr"])
-            signer_opts = profile_enforcer(params["ca"]).enforce(
+            signer_opts = builder(params["ca"]).build_and_enforce(
               :csr => csr,
               :profile_name => params["profile"],
               :subject => subject,
-              :san_names => san_names,
-              :message_digest => params["message_digest"]
-            )
-            signer_opts.merge!(
+              :extensions => extensions,
+              :message_digest => params["message_digest"],
               :not_before => validity_period[:not_before],
               :not_after => validity_period[:not_after],
             )
             cert = ca(params["ca"]).sign(signer_opts)
           elsif params.has_key?("spki")
             spki = spki_factory.build(:spki => params["spki"], :subject => subject)
-            signer_opts = profile_enforcer(params["ca"]).enforce(
+            signer_opts = builder(params["ca"]).build_and_enforce(
               :spki => spki,
               :profile_name => params["profile"],
               :subject => subject,
-              :san_names => san_names,
-              :message_digest => params["message_digest"]
-            )
-            signer_opts.merge!(
+              :extensions => extensions,
+              :message_digest => params["message_digest"],
               :not_before => validity_period[:not_before],
               :not_after => validity_period[:not_after],
             )
