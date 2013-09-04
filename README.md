@@ -10,13 +10,12 @@ You need r509 and sinatra. For development/tests you need rack-test and rspec.
 
 ### GET /1/crl/:ca/get
 
-Get the most recently generate CRL for the given ```:ca```.
+Deprecated; will be removed in a future version. Use generate instead.
 
-A new CRL is generated when a certificate is revoked or unrevoked, or if you explicitly generate it.
 
 ### GET /1/crl/:ca/generate
 
-Explicitly generate and get a new CRL for the given ```:ca```.
+Generate and get a new CRL for the given ```:ca```.
 
 ### POST /1/certificate/issue
 
@@ -99,6 +98,10 @@ For that, we've created a few pieces of Rack middleware for your use.
 - [r509-middleware-certwriter](https://github.com/sirsean/r509-middleware-certwriter)
 
 After installing one or both of them, you'll have to edit your ```config.ru`` and/or ```config.yaml``` files.
+
+##Support
+
+You can file bugs on GitHub or join the #r509 channel on irc.freenode.net to ask questions.
 
 ## Rake tasks
 

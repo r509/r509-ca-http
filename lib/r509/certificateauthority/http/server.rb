@@ -84,13 +84,13 @@ module R509
         end
 
         get '/1/crl/:ca/get/?' do
-          log.info "Get CRL for #{params[:ca]}"
+          log.info "DEPRECATED: Get CRL for #{params[:ca]}"
 
           if not crl(params[:ca])
             raise ArgumentError, "CA not found"
           end
 
-          crl(params[:ca]).to_pem
+          crl(params[:ca]).generate_crl.to_pem
         end
 
         get '/1/crl/:ca/generate/?' do

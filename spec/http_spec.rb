@@ -31,7 +31,9 @@ describe R509::CertificateAuthority::HTTP::Server do
 
   context "get CRL" do
     it "gets the CRL" do
-      @crls["test_ca"].should_receive(:to_pem).and_return("generated crl")
+      crl = double('crl')
+      crl.should_receive(:to_pem).and_return("generated crl")
+      @crls["test_ca"].should_receive(:generate_crl).and_return(crl)
       get "/1/crl/test_ca/get"
       last_response.should be_ok
       last_response.content_type.should match(/text\/plain/)
