@@ -1,4 +1,4 @@
-#r509-ca-http
+#r509-ca-http [![Build Status](https://secure.travis-ci.org/r509/r509-ca-http.png)](http://travis-ci.org/r509/r509-ca-http)
 
 r509-ca-http is an HTTP server that runs a certificate authority, for signing SSL certificates. It supports issuance and revocation, and is intended to be part of a complete certificate authority for use in production environments.
 
