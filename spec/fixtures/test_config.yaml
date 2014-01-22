@@ -1,17 +1,25 @@
-certificate_authorities: {
-  test_ca: {
-    ca_cert: {
-      cert: "test_ca.cer",
-      key: "test_ca.key"
-    },
-    cdp_location: ['http://crl.domain.com/test_ca.crl'],
-    message_digest: 'SHA1', #SHA1, SHA256, SHA512 supported. MD5 too, but you really shouldn't use that unless you have a good reason
-    profiles: {
-      server: {
-        basic_constraints: { "ca" : false },
-        key_usage: [digitalSignature,keyEncipherment],
-        extended_key_usage: [serverAuth]
-      }
-    }
-  }
-}
+---
+certificate_authorities:
+  test_ca:
+    ca_cert:
+      cert: test_ca.cer
+      key: test_ca.key
+    profiles:
+      server:
+        basic_constraints:
+          :ca: false
+        key_usage:
+          :value:
+          - digitalSignature
+          - keyEncipherment
+        extended_key_usage:
+          :value:
+          - serverAuth
+        crl_distribution_points:
+          :value:
+          - :type: URI
+            :value: http://crl.domain.com/test_ca.crl
+        default_md: SHA1
+        allowed_mds:
+        - SHA1
+        - SHA256

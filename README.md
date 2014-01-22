@@ -10,13 +10,12 @@ You need r509 and sinatra. For development/tests you need rack-test and rspec.
 
 ### GET /1/crl/:ca/get
 
-Get the most recently generate CRL for the given ```:ca```.
+Deprecated; will be removed in a future version. Use generate instead.
 
-A new CRL is generated when a certificate is revoked or unrevoked, or if you explicitly generate it.
 
 ### GET /1/crl/:ca/generate
 
-Explicitly generate and get a new CRL for the given ```:ca```.
+Generate and get a new CRL for the given ```:ca```.
 
 ### POST /1/certificate/issue
 
@@ -37,12 +36,15 @@ The subject is provided like so:
 Optional POST parameters:
 
 - extensions[subjectAlternativeName]
+- message\_digest
 
 SAN names are provided like so:
 
     extensions[subjectAlternativeName][]=domain1.com&extensions[subjectAlternativeName][]=domain2.com
 
 The issue method will return the PEM text of the issued certificate.
+
+Please note that all fields subject/extension request fields encoded in a CSR are ignored in favor of the POST parameters.
 
 ### POST /1/certificate/revoke
 
@@ -84,7 +86,7 @@ These pages are present on the server, for you to work with the CA with a basic 
 
 You use the ```config.yaml``` file to specify information about your certificate authority. You can operate multiple certificate authorities, each of which can have multiple profiles, with one instance of r509-ca-http.
 
-Information about how to construct the YAML can be found at [the official r509 documentation](https://github.com/reaperhulk/r509#config).
+Information about how to construct the YAML can be found at [the official r509 documentation](https://github.com/reaperhulk/r509).
 
 ## Middleware (config.ru)
 
@@ -96,6 +98,10 @@ For that, we've created a few pieces of Rack middleware for your use.
 - [r509-middleware-certwriter](https://github.com/sirsean/r509-middleware-certwriter)
 
 After installing one or both of them, you'll have to edit your ```config.ru`` and/or ```config.yaml``` files.
+
+##Support
+
+You can file bugs on GitHub or join the #r509 channel on irc.freenode.net to ask questions.
 
 ## Rake tasks
 
