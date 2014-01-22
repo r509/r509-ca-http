@@ -1,15 +1,15 @@
 source "https://rubygems.org"
 
-gemspec
-gem 'rake'
-gem 'rspec'
-gem 'rack-test'
+platforms :rbx do
+    gem "rubinius-coverage"
+end
 gem "r509", :git => "git://github.com/reaperhulk/r509.git"
 #gem "r509-middleware-validity", :git => "git://github.com/sirsean/r509-middleware-validity.git"
 #gem "r509-middleware-certwriter", :git => "git://github.com/sirsean/r509-middleware-certwriter.git"
 #gem "r509-validity-redis", :git => "git://github.com/sirsean/r509-validity-redis.git"
 gem "dependo", :git => "git://github.com/sirsean/dependo.git"
 gem 'sinatra'
+gemspec
 group :documentation do
   gem "yard", "~>0.8"
   gem "redcarpet", "~>2.2.2"
