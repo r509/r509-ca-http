@@ -3,6 +3,7 @@ source "https://rubygems.org"
 platforms :rbx do
     gem "rubysl-ipaddr"
     gem "rubysl-singleton"
+    gem "rubysl-base64"
     gem "rubinius-coverage"
 end
 gem "r509", :git => "git://github.com/reaperhulk/r509.git"
