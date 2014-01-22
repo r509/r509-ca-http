@@ -1,10 +1,10 @@
-#r509-ca-http [![Build Status](https://secure.travis-ci.org/r509/r509-ca-http.png)](http://travis-ci.org/r509/r509-ca-http)
+#r509-ca-http [![Build Status](https://secure.travis-ci.org/r509/r509-ca-http.png)](http://travis-ci.org/r509/r509-ca-http) [![Coverage Status](https://coveralls.io/repos/r509/r509-ca-http/badge.png)](https://coveralls.io/r/r509/r509-ca-http)
 
 r509-ca-http is an HTTP server that runs a certificate authority, for signing SSL certificates. It supports issuance and revocation, and is intended to be part of a complete certificate authority for use in production environments.
 
 ##Requirements/Installation
 
-You need r509 and sinatra. For development/tests you need rack-test and rspec.
+You need [r509](https://github.com/r509/r509) and sinatra. For development/tests you need rack-test and rspec.
 
 ## API
 
