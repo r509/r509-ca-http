@@ -86,7 +86,7 @@ These pages are present on the server, for you to work with the CA with a basic 
 
 You use the ```config.yaml``` file to specify information about your certificate authority. You can operate multiple certificate authorities, each of which can have multiple profiles, with one instance of r509-ca-http.
 
-Information about how to construct the YAML can be found at [the official r509 documentation](https://github.com/reaperhulk/r509).
+Information about how to construct the YAML can be found at [the official r509 documentation](https://github.com/r509/r509).
 
 ## Middleware (config.ru)
 
