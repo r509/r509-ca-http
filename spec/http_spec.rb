@@ -244,7 +244,7 @@ describe R509::CertificateAuthority::HTTP::Server do
       last_response.body.should == "generated crl"
     end
     it "when serial and reason are given" do
-      @crls["test_ca"].should_receive(:revoke_cert).with("12345", "1").and_return(nil)
+      @crls["test_ca"].should_receive(:revoke_cert).with("12345", 1).and_return(nil)
       crl_obj = double("crl-obj")
       @crls["test_ca"].should_receive(:generate_crl).and_return(crl_obj)
       crl_obj.should_receive(:to_pem).and_return("generated crl")
@@ -259,7 +259,7 @@ describe R509::CertificateAuthority::HTTP::Server do
       last_response.body.should == "#<R509::R509Error: some r509 error>"
     end
     it "when reason is not an integer" do
-      @crls["test_ca"].should_receive(:revoke_cert).with("12345", "foo").and_return(nil)
+      @crls["test_ca"].should_receive(:revoke_cert).with("12345", 0).and_return(nil)
       crl_obj = double("crl-obj")
       @crls["test_ca"].should_receive(:generate_crl).and_return(crl_obj)
       crl_obj.should_receive(:to_pem).and_return("generated crl")
