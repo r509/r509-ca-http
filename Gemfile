@@ -7,12 +7,12 @@ platforms :rbx do
     gem "rubysl-base64"
     gem "rubinius-coverage"
 end
-gem "r509", :git => "git://github.com/r509/r509.git"
-#gem "r509-middleware-validity", :git => "git://github.com/sirsean/r509-middleware-validity.git"
-#gem "r509-middleware-certwriter", :git => "git://github.com/sirsean/r509-middleware-certwriter.git"
-#gem "r509-validity-redis", :git => "git://github.com/sirsean/r509-validity-redis.git"
-gem "dependo", :git => "git://github.com/sirsean/dependo.git"
-gem 'sinatra'
+gem "r509"
+#gem "r509-middleware-validity"
+#gem "r509-middleware-certwriter"
+#gem "r509-validity-redis"
+gem "dependo"
+gem "sinatra"
 gemspec
 group :documentation do
   gem "yard", "~>0.8"
