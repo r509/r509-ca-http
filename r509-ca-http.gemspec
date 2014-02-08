@@ -16,7 +16,7 @@ spec = Gem::Specification.new do |s|
   s.add_development_dependency 'simplecov'
   s.author = "Sean Schulte"
   s.email = "sirsean@gmail.com"
-  s.homepage = "http://vikinghammer.com"
+  s.homepage = "http://r509.org"
   s.required_ruby_version = ">= 1.9.3"
   s.files = %w(README.md Rakefile) + Dir["{lib,script,spec,doc,cert_data}/**/*"]
   s.test_files= Dir.glob('test/*_spec.rb')
