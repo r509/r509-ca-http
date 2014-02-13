@@ -8,7 +8,10 @@ module R509::CertificateAuthority::HTTP
         raise ArgumentError, "Validity period must be positive"
       end
       {
-        :not_before => Time.now - 6 * 60 * 60,
+        # Begin the validity period 6 hours into the past, to account for
+        # possibly-slow clocks.
+        :not_before => Time.now - (6 * 60 * 60),
+        # Add validity_period number of seconds to the current time.
         :not_after => Time.now + validity_period.to_i,
       }
     end
