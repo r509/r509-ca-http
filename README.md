@@ -25,7 +25,7 @@ Required POST parameters:
 
 - ca
 - profile
-- validityPeriod (in days)
+- validityPeriod (in seconds)
 - csr (or spki)
 - subject
 
