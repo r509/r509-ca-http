@@ -2,8 +2,8 @@
 certificate_authorities:
   test_ca:
     ca_cert:
-      cert: test_ca.cer
-      key: test_ca.key
+      cert: spec/fixtures/test_ca.cer
+      key: spec/fixtures/test_ca.key
     profiles:
       server:
         basic_constraints:

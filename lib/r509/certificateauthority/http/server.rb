@@ -29,18 +29,6 @@ module R509
           disable :logging
           set :environment, :production
 
-          crls = {}
-          certificate_authorities = {}
-          options_builders = {}
-          config_pool.names.each do |name|
-            crls[name] = R509::CRL::Administrator.new(config_pool[name])
-            options_builders[name] = R509::CertificateAuthority::OptionsBuilder.new(config_pool[name])
-            certificate_authorities[name] = R509::CertificateAuthority::Signer.new(config_pool[name])
-          end
-
-          set :crls, crls
-          set :certificate_authorities, certificate_authorities
-          set :options_builders, options_builders
           set :subject_parser, R509::CertificateAuthority::HTTP::SubjectParser.new
           set :validity_period_converter, R509::CertificateAuthority::HTTP::ValidityPeriodConverter.new
           set :csr_factory, R509::CertificateAuthority::HTTP::Factory::CSRFactory.new
@@ -53,13 +41,13 @@ module R509
 
         helpers do
           def crl(name)
-            settings.crls[name]
+            Dependo::Registry[:crls][name]
           end
           def ca(name)
-            settings.certificate_authorities[name]
+            Dependo::Registry[:certificate_authorities][name]
           end
           def builder(name)
-            settings.options_builders[name]
+            Dependo::Registry[:options_builders][name]
           end
           def subject_parser
             settings.subject_parser
