@@ -2,16 +2,14 @@ require File.dirname(__FILE__) + '/spec_helper'
 require "openssl"
 
 describe R509::CertificateAuthority::HTTP::Server do
-  before :all do
-    #config_pool registry is in spec_helper because we need to register it
-    #BEFORE we include r509-ca-http
-    Dependo::Registry[:log] = Logger.new(nil)
-  end
-
   before :each do
-    @crls = { "test_ca" => double("crl") }
-    @certificate_authorities = { "test_ca" => double("test_ca") }
-    @options_builders = { "test_ca" => double("options_builder") }
+    # clear the dependo before each test
+    Dependo::Registry.clear
+    Dependo::Registry[:log] = Logger.new(nil)
+    R509::CertificateAuthority::HTTP::Config.load_config(File.dirname(__FILE__)+"/fixtures/test_config.yaml")
+    Dependo::Registry[:crls] = { "test_ca" => double("crl") }
+    Dependo::Registry[:certificate_authorities] = { "test_ca" => double("test_ca") }
+    Dependo::Registry[:options_builders] = { "test_ca" => double("options_builder") }
     @subject_parser = double("subject parser")
     #@validity_period_converter = double("validity period converter")
     @csr_factory = double("csr factory")
@@ -20,9 +18,6 @@ describe R509::CertificateAuthority::HTTP::Server do
 
   def app
     @app ||= R509::CertificateAuthority::HTTP::Server
-    @app.send(:set, :crls, @crls)
-    @app.send(:set, :certificate_authorities, @certificate_authorities)
-    @app.send(:set, :options_builders, @options_builders)
     @app.send(:set, :subject_parser, @subject_parser)
     #@app.send(:set, :validity_period_converter, @validity_period_converter)
     @app.send(:set, :csr_factory, @csr_factory)
@@ -33,7 +28,7 @@ describe R509::CertificateAuthority::HTTP::Server do
     it "gets the CRL" do
       crl = double('crl')
       crl.should_receive(:to_pem).and_return("generated crl")
-      @crls["test_ca"].should_receive(:generate_crl).and_return(crl)
+      Dependo::Registry[:crls]["test_ca"].should_receive(:generate_crl).and_return(crl)
       get "/1/crl/test_ca/get"
       last_response.should be_ok
       last_response.content_type.should match(/text\/plain/)
@@ -50,7 +45,7 @@ describe R509::CertificateAuthority::HTTP::Server do
     it "generates the CRL" do
       crl = double('crl')
       crl.should_receive(:to_pem).and_return("generated crl")
-      @crls["test_ca"].should_receive(:generate_crl).and_return(crl)
+      Dependo::Registry[:crls]["test_ca"].should_receive(:generate_crl).and_return(crl)
       get "/1/crl/test_ca/generate"
       last_response.should be_ok
       last_response.body.should == "generated crl"
@@ -105,7 +100,7 @@ describe R509::CertificateAuthority::HTTP::Server do
       #@validity_period_converter.should_receive(:convert).with("365").and_return({:not_before => 1, :not_after => 2})
       subject = R509::Subject.new [["CN", "domain.com"]]
       @subject_parser.should_receive(:parse).with(anything, "subject").and_return(subject)
-      @options_builders["test_ca"].should_receive(:build_and_enforce).with(:csr => csr, :profile_name => "profile", :extensions => [], :subject => subject, :message_digest =>nil, :not_before=> kind_of(Time), :not_after => kind_of(Time) ).and_raise(R509::R509Error.new("failed to issue because of: good reason"))
+      Dependo::Registry[:options_builders]["test_ca"].should_receive(:build_and_enforce).with(:csr => csr, :profile_name => "profile", :extensions => [], :subject => subject, :message_digest =>nil, :not_before=> kind_of(Time), :not_after => kind_of(Time) ).and_raise(R509::R509Error.new("failed to issue because of: good reason"))
 
       post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr"
       last_response.should_not be_ok
@@ -118,8 +113,8 @@ describe R509::CertificateAuthority::HTTP::Server do
       subject = R509::Subject.new [["CN", "domain.com"]]
       @subject_parser.should_receive(:parse).with(anything, "subject").and_return(subject)
       cert = double("cert")
-      @options_builders["test_ca"].should_receive(:build_and_enforce).with(:csr => csr, :profile_name => "profile", :extensions => [], :subject => subject, :message_digest =>nil, :not_before=> kind_of(Time), :not_after => kind_of(Time) ).and_return(:csr => csr, :profile_name => "profile", :subject => subject, :message_digest => "SHA1", :not_before=> kind_of(Time), :not_after => kind_of(Time) )
-      @certificate_authorities["test_ca"].should_receive(:sign).and_return(cert)
+      Dependo::Registry[:options_builders]["test_ca"].should_receive(:build_and_enforce).with(:csr => csr, :profile_name => "profile", :extensions => [], :subject => subject, :message_digest =>nil, :not_before=> kind_of(Time), :not_after => kind_of(Time) ).and_return(:csr => csr, :profile_name => "profile", :subject => subject, :message_digest => "SHA1", :not_before=> kind_of(Time), :not_after => kind_of(Time) )
+      Dependo::Registry[:certificate_authorities]["test_ca"].should_receive(:sign).and_return(cert)
       cert.should_receive(:to_pem).and_return("signed cert")
 
       post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr"
@@ -133,8 +128,8 @@ describe R509::CertificateAuthority::HTTP::Server do
       subject = R509::Subject.new [["CN", "domain.com"]]
       @subject_parser.should_receive(:parse).with(anything, "subject").and_return(subject)
       cert = double("cert")
-      @options_builders["test_ca"].should_receive(:build_and_enforce).with(:csr => csr, :profile_name => "profile", :extensions => kind_of(Array), :subject => subject, :extensions => kind_of(Array), :message_digest =>nil, :not_before=> kind_of(Time), :not_after => kind_of(Time) ).and_return(:csr => csr, :profile_name => "profile", :subject => subject, :message_digest => "SHA1", :not_before=> kind_of(Time), :not_after => kind_of(Time) )
-      @certificate_authorities["test_ca"].should_receive(:sign).and_return(cert)
+      Dependo::Registry[:options_builders]["test_ca"].should_receive(:build_and_enforce).with(:csr => csr, :profile_name => "profile", :extensions => kind_of(Array), :subject => subject, :extensions => kind_of(Array), :message_digest =>nil, :not_before=> kind_of(Time), :not_after => kind_of(Time) ).and_return(:csr => csr, :profile_name => "profile", :subject => subject, :message_digest => "SHA1", :not_before=> kind_of(Time), :not_after => kind_of(Time) )
+      Dependo::Registry[:certificate_authorities]["test_ca"].should_receive(:sign).and_return(cert)
       cert.should_receive(:to_pem).and_return("signed cert")
 
       post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr", "extensions[subjectAlternativeName][]" => ["domain1.com","domain2.com"]
@@ -148,8 +143,8 @@ describe R509::CertificateAuthority::HTTP::Server do
       subject = R509::Subject.new [["CN", "domain.com"]]
       @subject_parser.should_receive(:parse).with(anything, "subject").and_return(subject)
       cert = double("cert")
-      @options_builders["test_ca"].should_receive(:build_and_enforce).with(:csr => csr, :profile_name => "profile", :subject => subject, :extensions => kind_of(Array), :message_digest =>nil, :not_before=> kind_of(Time), :not_after => kind_of(Time) ).and_return(:csr => csr, :profile_name => "profile", :subject => subject, :message_digest => "SHA1")
-      @certificate_authorities["test_ca"].should_receive(:sign).and_return(cert)
+      Dependo::Registry[:options_builders]["test_ca"].should_receive(:build_and_enforce).with(:csr => csr, :profile_name => "profile", :subject => subject, :extensions => kind_of(Array), :message_digest =>nil, :not_before=> kind_of(Time), :not_after => kind_of(Time) ).and_return(:csr => csr, :profile_name => "profile", :subject => subject, :message_digest => "SHA1")
+      Dependo::Registry[:certificate_authorities]["test_ca"].should_receive(:sign).and_return(cert)
       cert.should_receive(:to_pem).and_return("signed cert")
 
       post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr", "extensions[dNSNames][]" => ["domain1.com","domain2.com"]
@@ -163,8 +158,8 @@ describe R509::CertificateAuthority::HTTP::Server do
       subject = R509::Subject.new [["CN", "domain.com"]]
       @subject_parser.should_receive(:parse).with(anything, "subject").and_return(subject)
       cert = double("cert")
-      @options_builders["test_ca"].should_receive(:build_and_enforce).with(:csr => csr, :profile_name => "profile", :subject => subject, :extensions => kind_of(Array), :message_digest => nil, :not_before=> kind_of(Time), :not_after => kind_of(Time) ).and_return(:csr => csr)
-      @certificate_authorities["test_ca"].should_receive(:sign).and_return(cert)
+      Dependo::Registry[:options_builders]["test_ca"].should_receive(:build_and_enforce).with(:csr => csr, :profile_name => "profile", :subject => subject, :extensions => kind_of(Array), :message_digest => nil, :not_before=> kind_of(Time), :not_after => kind_of(Time) ).and_return(:csr => csr)
+      Dependo::Registry[:certificate_authorities]["test_ca"].should_receive(:sign).and_return(cert)
       cert.should_receive(:to_pem).and_return("signed cert")
 
       post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr", "extensions[subjectAlternativeName][]" => ["domain1.com","domain2.com"], "extensions[dNSNames][]" => ["domain3.com", "domain4.com"]
@@ -178,8 +173,8 @@ describe R509::CertificateAuthority::HTTP::Server do
       spki = double("spki")
       @spki_factory.should_receive(:build).with(:spki => "spki", :subject => subject).and_return(spki)
       cert = double("cert")
-      @options_builders["test_ca"].should_receive(:build_and_enforce).with(:spki => spki, :profile_name => "profile", :extensions => [], :subject => subject, :message_digest => nil, :not_before=> kind_of(Time), :not_after => kind_of(Time) ).and_return(:spki => spki, :not_before=> kind_of(Time), :not_after => kind_of(Time) )
-      @certificate_authorities["test_ca"].should_receive(:sign).and_return(cert)
+      Dependo::Registry[:options_builders]["test_ca"].should_receive(:build_and_enforce).with(:spki => spki, :profile_name => "profile", :extensions => [], :subject => subject, :message_digest => nil, :not_before=> kind_of(Time), :not_after => kind_of(Time) ).and_return(:spki => spki, :not_before=> kind_of(Time), :not_after => kind_of(Time) )
+      Dependo::Registry[:certificate_authorities]["test_ca"].should_receive(:sign).and_return(cert)
       cert.should_receive(:to_pem).and_return("signed cert")
 
       post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "spki" => "spki"
@@ -193,8 +188,8 @@ describe R509::CertificateAuthority::HTTP::Server do
       spki = double("spki")
       @spki_factory.should_receive(:build).with(:spki => "spki", :subject => subject).and_return(spki)
       cert = double("cert")
-      @options_builders["test_ca"].should_receive(:build_and_enforce).with(:spki => spki, :profile_name => "profile", :extensions => kind_of(Array), :subject => subject, :message_digest => nil, :not_before=> kind_of(Time), :not_after => kind_of(Time) ).and_return(:spki => spki, :not_before=> kind_of(Time), :not_after => kind_of(Time) )
-      @certificate_authorities["test_ca"].should_receive(:sign).and_return(cert)
+      Dependo::Registry[:options_builders]["test_ca"].should_receive(:build_and_enforce).with(:spki => spki, :profile_name => "profile", :extensions => kind_of(Array), :subject => subject, :message_digest => nil, :not_before=> kind_of(Time), :not_after => kind_of(Time) ).and_return(:spki => spki, :not_before=> kind_of(Time), :not_after => kind_of(Time) )
+      Dependo::Registry[:certificate_authorities]["test_ca"].should_receive(:sign).and_return(cert)
       cert.should_receive(:to_pem).and_return("signed cert")
 
       post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "spki" => "spki", "extensions[subjectAlternativeName][]" => ["domain1.com","domain2.com"]
@@ -208,8 +203,8 @@ describe R509::CertificateAuthority::HTTP::Server do
       subject = R509::Subject.new [["CN", "domain.com"]]
       @subject_parser.should_receive(:parse).with(anything, "subject").and_return(subject)
       cert = double("cert")
-      @options_builders["test_ca"].should_receive(:build_and_enforce).with(:csr => csr, :profile_name => "profile", :subject => subject, :extensions => kind_of(Array), :message_digest => nil, :not_before=> kind_of(Time), :not_after => kind_of(Time) ).and_return(:csr => csr, :not_before=> kind_of(Time), :not_after => kind_of(Time) )
-      @certificate_authorities["test_ca"].should_receive(:sign).and_return(cert)
+      Dependo::Registry[:options_builders]["test_ca"].should_receive(:build_and_enforce).with(:csr => csr, :profile_name => "profile", :subject => subject, :extensions => kind_of(Array), :message_digest => nil, :not_before=> kind_of(Time), :not_after => kind_of(Time) ).and_return(:csr => csr, :not_before=> kind_of(Time), :not_after => kind_of(Time) )
+      Dependo::Registry[:certificate_authorities]["test_ca"].should_receive(:sign).and_return(cert)
       cert.should_receive(:to_pem).and_return("signed cert")
 
       post "/1/certificate/issue", "ca" => "test_ca", "profile" => "profile", "subject" => "subject", "validityPeriod" => 365, "csr" => "csr", "extensions[subjectAlternativeName][]" => ["domain1.com","domain2.com","",""]
@@ -235,42 +230,42 @@ describe R509::CertificateAuthority::HTTP::Server do
       last_response.body.should == "#<ArgumentError: Serial must be provided>"
     end
     it "when serial is given but not reason" do
-      @crls["test_ca"].should_receive(:revoke_cert).with("12345", nil).and_return(nil)
+      Dependo::Registry[:crls]["test_ca"].should_receive(:revoke_cert).with("12345", nil).and_return(nil)
       crl_obj = double("crl-obj")
-      @crls["test_ca"].should_receive(:generate_crl).and_return(crl_obj)
+      Dependo::Registry[:crls]["test_ca"].should_receive(:generate_crl).and_return(crl_obj)
       crl_obj.should_receive(:to_pem).and_return("generated crl")
       post "/1/certificate/revoke", "ca" => "test_ca", "serial" => "12345"
       last_response.should be_ok
       last_response.body.should == "generated crl"
     end
     it "when serial and reason are given" do
-      @crls["test_ca"].should_receive(:revoke_cert).with("12345", 1).and_return(nil)
+      Dependo::Registry[:crls]["test_ca"].should_receive(:revoke_cert).with("12345", 1).and_return(nil)
       crl_obj = double("crl-obj")
-      @crls["test_ca"].should_receive(:generate_crl).and_return(crl_obj)
+      Dependo::Registry[:crls]["test_ca"].should_receive(:generate_crl).and_return(crl_obj)
       crl_obj.should_receive(:to_pem).and_return("generated crl")
       post "/1/certificate/revoke", "ca" => "test_ca", "serial" => "12345", "reason" => "1"
       last_response.should be_ok
       last_response.body.should == "generated crl"
     end
     it "when serial is not an integer" do
-      @crls["test_ca"].should_receive(:revoke_cert).with("foo", nil).and_raise(R509::R509Error.new("some r509 error"))
+      Dependo::Registry[:crls]["test_ca"].should_receive(:revoke_cert).with("foo", nil).and_raise(R509::R509Error.new("some r509 error"))
       post "/1/certificate/revoke", "ca" => "test_ca", "serial" => "foo"
       last_response.should_not be_ok
       last_response.body.should == "#<R509::R509Error: some r509 error>"
     end
     it "when reason is not an integer" do
-      @crls["test_ca"].should_receive(:revoke_cert).with("12345", 0).and_return(nil)
+      Dependo::Registry[:crls]["test_ca"].should_receive(:revoke_cert).with("12345", 0).and_return(nil)
       crl_obj = double("crl-obj")
-      @crls["test_ca"].should_receive(:generate_crl).and_return(crl_obj)
+      Dependo::Registry[:crls]["test_ca"].should_receive(:generate_crl).and_return(crl_obj)
       crl_obj.should_receive(:to_pem).and_return("generated crl")
       post "/1/certificate/revoke", "ca" => "test_ca", "serial" => "12345", "reason" => "foo"
       last_response.should be_ok
       last_response.body.should == "generated crl"
     end
     it "when reason is an empty string" do
-      @crls["test_ca"].should_receive(:revoke_cert).with("12345", nil).and_return(nil)
+      Dependo::Registry[:crls]["test_ca"].should_receive(:revoke_cert).with("12345", nil).and_return(nil)
       crl_obj = double("crl-obj")
-      @crls["test_ca"].should_receive(:generate_crl).and_return(crl_obj)
+      Dependo::Registry[:crls]["test_ca"].should_receive(:generate_crl).and_return(crl_obj)
       crl_obj.should_receive(:to_pem).and_return("generated crl")
       post "/1/certificate/revoke", "ca" => "test_ca", "serial" => "12345", "reason" => ""
       last_response.should be_ok
@@ -295,9 +290,9 @@ describe R509::CertificateAuthority::HTTP::Server do
       last_response.body.should == "#<ArgumentError: Serial must be provided>"
     end
     it "when serial is given" do
-      @crls["test_ca"].should_receive(:unrevoke_cert).with(12345).and_return(nil)
+      Dependo::Registry[:crls]["test_ca"].should_receive(:unrevoke_cert).with(12345).and_return(nil)
       crl_obj = double("crl-obj")
-      @crls["test_ca"].should_receive(:generate_crl).and_return(crl_obj)
+      Dependo::Registry[:crls]["test_ca"].should_receive(:generate_crl).and_return(crl_obj)
       crl_obj.should_receive(:to_pem).and_return("generated crl")
       post "/1/certificate/unrevoke", "ca" => "test_ca", "serial" => "12345"
       last_response.should be_ok
