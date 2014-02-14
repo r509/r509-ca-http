@@ -1,5 +1,6 @@
 require 'sinatra/base'
 require 'r509'
+require "#{File.dirname(__FILE__)}/config"
 require "#{File.dirname(__FILE__)}/subjectparser"
 require "#{File.dirname(__FILE__)}/validityperiodconverter"
 require "#{File.dirname(__FILE__)}/factory"
@@ -7,6 +8,14 @@ require 'base64'
 require 'yaml'
 require 'logger'
 require 'dependo'
+
+# Capture USR2 calls so we can reload and print the config
+# I'd rather use HUP, but daemons like thin already capture that
+# so we can't use it.
+Signal.trap("USR2") do
+  R509::CertificateAuthority::HTTP::Config.load_config
+  R509::CertificateAuthority::HTTP::Config.print_config
+end
 
 module R509
   module CertificateAuthority

@@ -99,6 +99,10 @@ For that, we've created a few pieces of Rack middleware for your use.
 
 After installing one or both of them, you'll have to edit your ```config.ru`` and/or ```config.yaml``` files.
 
+##Signals
+
+You can send a kill -USR2 signal to any running r509-ca-http process to cause it to reload and print its config to the logs (provided your app server isn't trapping USR2 first).
+
 ##Support
 
 You can file bugs on GitHub or join the #r509 channel on irc.freenode.net to ask questions.
