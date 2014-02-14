@@ -94,10 +94,10 @@ Running r509-ca-http will let you issue and revoke certificates. But that's not 
 
 For that, we've created a few pieces of Rack middleware for your use.
 
-- [r509-middleware-validity](https://github.com/sirsean/r509-middleware-validity)
-- [r509-middleware-certwriter](https://github.com/sirsean/r509-middleware-certwriter)
+- [r509-middleware-validity](https://github.com/r509/r509-middleware-validity)
+- [r509-middleware-certwriter](https://github.com/r509/r509-middleware-certwriter)
 
-After installing one or both of them, you'll have to edit your ```config.ru`` and/or ```config.yaml``` files.
+After installing one or both of them, you'll have to edit your ```config.ru``` and/or ```config.yaml``` files.
 
 ##Signals
 
